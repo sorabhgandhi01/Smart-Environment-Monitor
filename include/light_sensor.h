@@ -1,6 +1,8 @@
 #ifndef _LIGHT_SENSOR_H_
 #define _LIGHT_SENSOR_H_
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include "i2c_helper.h"
 
