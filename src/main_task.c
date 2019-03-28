@@ -12,11 +12,14 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <mqueue.h>
 
 /* Macros */
 #define QUEUE_NAME			"/my_queue"
 #define SIZE_OF_QUEUE		10
 #define QUEUE_PERMISSIONS	0666
+
+FILE *fptr;
 
 /* Pthreads */
 pthread_t light_thread;
@@ -28,6 +31,9 @@ pthread_t socket_thread;
 pthread_mutex_t lock;
 
 
+/* Global variables for queue */
+mqd_t logger_queue;
+struct mq_attr queue_attr;
 
 int flag;
 
@@ -38,17 +44,18 @@ static timer_t main_timerid;
 static timer_t logger_timerid;
 static timer_t socket_timerid;
 
+/* Thread Alive/Dead Counter check structure */
+typedef struct{
+	int temp_count;
+	int light_count;
+	int logger_count;
+	int socket_count;
+}thread_status_tracker_t;
 
 
-/* Thread Alive Check variables */
-int temp_check=0;
-int temp_check_prev=0;
-int light_check=0;
-int light_check_prev=0;
-int logger_check=0;
-int logger_check_prev=0;
-int socket_check=0;
-int socket_check_prev=0;
+/* Create structure instances */
+thread_status_tracker_t current = {0};
+thread_status_tracker_t prev = {0};
 
 
 /* Thread IDs */
@@ -57,22 +64,10 @@ pid_t temp_tid;
 pid_t logger_tid;
 pid_t socket_tid;
 
-/* Global variables */
-char logfilename[30];
-char logfilepath[50];
+/* Buffer for storing queue data */
+char buffer[50];
 
 char *proj1 = "/tmp/proj1";
-
-
-// /* Returns the current time in microseconds */
-// long getMicrotime()
-// {
-// 	struct timeval currentTime;
-// 	gettimeofday(&currentTime, NULL);
-// 	return currentTime.tv_sec * (int)1e6 + currentTime.tv_usec;
-// }
-
-
 
 /* Function Prototypes */
 void *light_thread_handler();
@@ -82,77 +77,101 @@ void *socket_thread_handler();
 void *main_thread_handler();
 
 
+/* Function Prototypes for timer handler */
 void light_timer_handler(void);
 void temp_timer_handler(void);
 void logger_timer_handler(void);
 void socket_timer_handler(void);
 
 
-void set_sig_handler(void);
-void handler(int signo,siginfo_t *info,void *extra);
 
-
-void handler(int signo,siginfo_t *info,void *extra)
-{
-	printf("In handler\n");
-	flag=1;
-
-}
-
-
+/* Light Timer handler */
 void light_timer_handler(void)
 {
-	
+	char buffer[50];
 	pthread_mutex_lock(&lock);
+	
 	printf("LIGHT TIMER HANDLER\n");
 
 	int fd = open(proj1,O_WRONLY);
+	sprintf(buffer,"LIGHT THREAD DATA\nTID:%ld\n",syscall(SYS_gettid));
+
+	mq_send(logger_queue,buffer,50,0);
 
 	write(fd,"L",1);
 
 	close(fd); 
+	
 	pthread_mutex_unlock(&lock);
 
 	
 }
 
+
+/* Temperature Timer Handler */
 void temp_timer_handler(void)
 {
+	char buffer[50];
 	pthread_mutex_lock(&lock);
+	
 	printf("TEMPERATURE TIMER HANDLER\n");
+	
 	int fd = open(proj1,O_WRONLY);
+
+	sprintf(buffer,"TEMP THREAD DATA\nTID:%ld\n",syscall(SYS_gettid));
+
+	mq_send(logger_queue,buffer,50,0);
 
 	write(fd,"T",1);
 
 	close(fd);
+	
 	pthread_mutex_unlock(&lock);
 
 	
 }
 
+/* Logger Timer Handler */
 void logger_timer_handler(void)
 {
-	pthread_mutex_lock(&lock);
+	char buffer[50];
+	//pthread_mutex_lock(&lock);
 
 	printf("LOGGER TIMER HANDLER\n");
+	
 	int fd = open(proj1,O_WRONLY);
+
+	sprintf(buffer,"LOGGER THREAD DATA\nTID:%ld\n",syscall(SYS_gettid));
+
+	mq_send(logger_queue,buffer,50,0);
 
 	write(fd,"O",1);
 
 	close(fd);
-	pthread_mutex_unlock(&lock);
+	
+	//pthread_mutex_unlock(&lock);
 }
 
 
+/* Socket Timer Handler */
 void socket_timer_handler(void)
 {
+	char buffer[50];
 	pthread_mutex_lock(&lock);
+	
 	printf("SOCKET TIMER HANDLER\n");
+	
 	int fd = open(proj1,O_WRONLY);
+
+	sprintf(buffer,"SOCKET THREAD DATA\nTID:%ld\n",syscall(SYS_gettid));
+
+	mq_send(logger_queue,buffer,50,0);
+
 
 	write(fd,"S",1);
 
 	close(fd);
+	
 	pthread_mutex_unlock(&lock);
 }
 
@@ -162,7 +181,6 @@ void *light_thread_handler()
 	char light_buffer[50];
 	char light_info[]="Taking Light Reading......\n";
 
-//while(1){
 	struct sigevent sev;
 	struct timespec mainTimeSpec;
 	struct itimerspec trigger;
@@ -198,19 +216,9 @@ void *light_thread_handler()
 	 */
     trigger.it_interval.tv_sec = 2;
 
-    timer_settime(light_timerid,0,&trigger,NULL);
+	timer_settime(light_timerid,0,&trigger,NULL);
 
-	//while(1){
-	// pthread_mutex_lock(&lock);
-	// int fd = open(proj1,O_WRONLY);
-
-	// write(fd,"L",1);
-
-	// close(fd); 
-	// pthread_mutex_unlock(&lock);
 	
-
-//	}
 
 	 pid_t light_tid = syscall(SYS_gettid);	//Get thread id
 	 printf("LIGHT TID:%d\n",light_tid);
@@ -219,8 +227,8 @@ void *light_thread_handler()
 
 
 
-	 pthread_cancel(pthread_self());
-	 timer_delete(light_timerid);
+	pthread_cancel(pthread_self());
+	timer_delete(light_timerid);
 
 
 }
@@ -231,7 +239,6 @@ void *temp_thread_handler()
 	char temp_buffer[50];
 	char temp_info[]="Taking Temperature Reading......\n";
 
-	//while(1){
 	struct sigevent temp_sev;
 	struct timespec temp_mainTimeSpec;
 	struct itimerspec temp_trigger;
@@ -269,28 +276,12 @@ void *temp_thread_handler()
 
     timer_settime(temp_timerid,0,&temp_trigger,NULL);
 
-
-	
-//	while(1){
-	// pthread_mutex_lock(&lock);
-	// int fd = open(proj1,O_WRONLY);
-
-	// //write(fd,"T",1);
-
-	// close(fd);
-	// pthread_mutex_unlock(&lock);
-//	}
-	// pid_t temp_tid = syscall(SYS_gettid);	//Get thread id	
-	// printf("TEMPERATURE TID:%d\n",temp_tid);
-
-	pthread_cancel(pthread_self());
-	timer_delete(temp_timerid);
 }
 
 void *logger_thread_handler()
 {
 
-	char logger_buffer[50];
+	char buffer[50];
 	char logger_info[]="Logging Data......\n";
 
 
@@ -332,15 +323,16 @@ void *logger_thread_handler()
 
     timer_settime(logger_timerid,0,&logger_trigger,NULL);
 
-	// while(1){
-	// pthread_mutex_lock(&lock);
-	// int fd = open(proj1,O_WRONLY);
 
-	// write(fd,"O",1);
+    while(1)
+    {
+    	fptr = fopen("log.txt","a");
+		mq_receive(logger_queue,buffer,50,0);
+		fprintf(fptr,"%s\n",buffer);
+		fclose(fptr);
 
-	// close(fd);
-	// pthread_mutex_unlock(&lock);
-	// }
+    }
+
 	// pid_t logger_tid = syscall(SYS_gettid);	//Get thread id	
 	// printf("LOGGER TID:%d\n",logger_tid);
 }
@@ -383,84 +375,57 @@ void *socket_thread_handler()
 
 	/* Uncomment the following line to set the interval timer and
 	 * and see the threadhandler() execute periodically.
-	 */
+	 */	
     socket_trigger.it_interval.tv_sec = 2;
 
     timer_settime(socket_timerid,0,&socket_trigger,NULL);
 
-	// while(1){
-	// pthread_mutex_lock(&lock);
-	// int fd = open(proj1,O_WRONLY);
-
-	// write(fd,"S",1);
-
-	// close(fd);
-	// pthread_mutex_unlock(&lock);
-	// }
-
-	// pid_t socket_tid = syscall(SYS_gettid);	//Get thread id
-	// printf("SOCKET TID:%d\n",socket_tid);
 }
 
 
 void *main_thread_handler(void)
 {
-	if(temp_check <= temp_check_prev)
+	if(current.temp_count <= prev.temp_count)
 	{
-		printf("The Temperature Thread is dead\n");
+		printf("\nTemperature Thread : DEAD\n");
 	}
 	else
 	{
-		printf("\nTemp Thread is ALIVE!!!\n");
+		printf("\nTemperature Thread : ALIVE\n");
 	}
 
-	if(light_check <=light_check_prev)
+	if(current.light_count <= prev.light_count)
 	{
-		printf("The Light Thread is dead\n");
+		printf("\nLight Thread : DEAD\n");
 	}
 	else
 	{
-		printf("\nLight Thread is ALIVE!!!\n");		
+		printf("\nLight Thread : ALIVE\n");		
 	}
 
-	if(logger_check <=logger_check_prev)
+	if(current.logger_count <= prev.logger_count)
 	{
-		printf("The Logger Thread is dead\n");
+		printf("\nLogger Thread : DEAD\n");
 	}
 	else
 	{
-		printf("\nLogger Thread is ALIVE!!!\n");		
+		printf("\nLogger Thread : ALIVE\n");		
 	}
 
-	if(socket_check <=socket_check_prev)
+	if(current.socket_count <= prev.socket_count)
 	{
-		printf("The Socket Thread is dead\n");
+		printf("\nSocket Thread : DEAD\n");
 	}
 	else
 	{
-		printf("\nSocket Thread is ALIVE!!!\n");		
+		printf("\nSocket Thread : ALIVE\n");		
 	}
 
 
-	temp_check_prev = temp_check;
-	light_check_prev = light_check;
-	logger_check_prev = logger_check;
-	socket_check_prev = socket_check;
-}
-
-
-/* Set the signal handler */
-void set_sig_handler(void)
-{
-    struct sigaction action;
-    action.sa_flags = SA_SIGINFO; 
-    action.sa_sigaction = handler;
- 
-    if (sigaction(SIGUSR1, &action, NULL) == -1)
-    { 
-        perror("sigusr: sigaction");
-        _exit(1);
-    }
+	prev.temp_count 	= current.temp_count;
+	prev.light_count 	= current.light_count;
+	prev.logger_count 	= current.logger_count;
+	prev.socket_count 	= current.socket_count;
 }
 
 
@@ -470,10 +435,9 @@ int main(int argc, char *argv[])
 {
 	printf("Initiating the Project!\n");
 
-	set_sig_handler();
-
 	/* Create Named Pipe */
 	mkfifo(proj1,QUEUE_PERMISSIONS);
+
 
 	if(pthread_mutex_init(&lock,NULL) !=0)
 	{
@@ -481,6 +445,18 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
+	// mqd_t logger_queue;
+	// struct mq_attr queue_attr;
+	queue_attr.mq_maxmsg = SIZE_OF_QUEUE;
+	queue_attr.mq_msgsize = 50;
+
+	logger_queue = mq_open(QUEUE_NAME,O_CREAT | O_RDWR, QUEUE_PERMISSIONS,&queue_attr);
+
+	if(logger_queue == (mqd_t)-1)
+	{
+		perror("Failed to Open Queue");
+		exit(0);
+	}
 
 	/* Create Light Thread */
 	pthread_create(&light_thread,NULL,light_thread_handler,(void *)NULL);
@@ -552,29 +528,29 @@ int main(int argc, char *argv[])
 		if(!strcmp(heartbeat,"L"))
 		{
 			printf("Hearbeat from LIGHT\n");
-			light_check++;
-			printf("Light_check = %d\n",light_check);
+			(current.light_count)++;
+			printf("Light_check = %d\n",current.light_count);
 		}
 
 		if(!strcmp(heartbeat,"T"))
 		{
 			printf("Hearbeat from TEMPERATURE\n");
-			temp_check++;
-			printf("Temp_check = %d\n",temp_check);
+			(current.temp_count)++;
+			printf("Temp_check = %d\n",current.temp_count);
 		}
 
 		if(!strcmp(heartbeat,"O"))
 		{
 			printf("Hearbeat from LOGGER\n");
-			logger_check++;
-			printf("Logger_check = %d\n",logger_check);
+			(current.logger_count)++;
+			printf("Logger_check = %d\n",current.logger_count);
 		}
 
 		if(!strcmp(heartbeat,"S"))
 		{
 			printf("Hearbeat from SOCKET\n");
-			socket_check++;
-			printf("Socket_check = %d\n",socket_check);
+			(current.socket_count)++;
+			printf("Socket_check = %d\n",current.socket_count);
 		}
 
 
