@@ -22,6 +22,6 @@ int write_thigh_reg(uint16_t temp);
 
 int read_thigh_reg(uint16_t *temp);
 
-int get_sensortemp(uint16_t *temp);
+int get_sensortemp(float *temp);
 
 #endif

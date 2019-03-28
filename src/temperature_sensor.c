@@ -47,7 +47,7 @@ int read_thigh_reg(uint16_t *temp)
 	return status;
 }
 
-int get_sensortemp(uint16_t *temp)
+int get_sensortemp(float *temp)
 {
 	uint8_t buff[2] = {0};
 	unsigned char MSB, LSB;
