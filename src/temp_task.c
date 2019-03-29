@@ -1,20 +1,51 @@
 #include "main_task.h"
 #include "temp_task.h"
+#include "temperature_sensor.h"
 
 
 char *proj2 = "/tmp/proj1";
+
+int process_temp_data(float *data)
+{
+	int status;
+
+	status = i2c_open();
+
+    if (status != 0) {
+        printf("Failed to open I2C Bus\n");
+        return -1;
+    }
+
+	if (get_sensortemp(data) == -1) {
+		printf("Failed to fetch temperature data\n");
+		return -1;
+	}
+
+	printf("Temp Date = %f\n", data);
+
+	if (i2c_close() != 0) {
+		printf("Failed to close I2C Bus\n");
+		return -1;
+	}
+
+	return 0;
+}
 
 /* Temperature Timer Handler */
 void temp_timer_handler(void)
 {
 	char buffer[50];
+	float data = 0;
+
 	pthread_mutex_lock(&lock);
 	
 	printf("TEMPERATURE TIMER HANDLER\n");
+
+	process_temp_data(&data);
 	
 	int fd = open(proj2,O_WRONLY);
 
-	sprintf(buffer,"TEMP THREAD DATA\nTID:%ld\n",syscall(SYS_gettid));
+	sprintf(buffer,"TEMP THREAD DATA\tTID:%ld\ttemp = %f\n",syscall(SYS_gettid), data);
 
 	mq_send(logger_queue,buffer,50,0);
 

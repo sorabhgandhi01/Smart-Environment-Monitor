@@ -1,7 +1,35 @@
 #include "main_task.h"
 #include "light_task.h"
 
+#include "light_sensor.h"
+
 char *proj3 = "/tmp/proj1";
+
+int process_light_data(float *data)
+{
+	int status = i2c_open();
+
+    if (status != 0) {
+        printf("Failed to open I2C Bus\n");
+        return -1;
+    }
+
+    if ((sensor_enable()) != MRAA_SUCCESS) {
+
+        printf("Failed to enable the sensor\n");
+        return -1;
+    }
+
+    *data = get_sensorlux();
+
+    if (i2c_close() != 0) {
+		printf("Failed to close I2C Bus\n");
+		return -1;
+	}
+
+	return 0;
+       
+}
 
 /* Light Timer handler */
 void light_timer_handler(void)
@@ -24,9 +52,6 @@ void light_timer_handler(void)
 
 	
 }
-
-
-
 
 void *light_thread_handler()
 {

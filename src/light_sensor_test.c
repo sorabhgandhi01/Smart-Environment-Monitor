@@ -45,7 +45,7 @@ int main()
 
     read_sensorID(&id);
     printf("ID = %x\n", id);
-    if (0x39 == (id & 0xF0)) {
+    if (0x50 == (id & 0xF0)) {
         printf("Sensor test passed\n");
     }
 
