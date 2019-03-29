@@ -57,6 +57,9 @@ int get_sensortemp(float *temp)
 	if (status == -1)
 		return status;
 
+	MSB = buff[0];
+	LSB = buff[1];
+
 	data = ((MSB << 8) | LSB) >> 4;
 	*temp = data*0.0625;
 

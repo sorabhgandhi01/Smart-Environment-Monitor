@@ -20,7 +20,7 @@ int sensor_disable()
 
 int read_sensorID(uint8_t *id)
 {
-    int status = i2c_read(LIGHT_SENSOR_ADDR, id, (DATA0LOW_REG | COMMAND_REG));
+    int status = i2c_read(LIGHT_SENSOR_ADDR, id, (ID_REG | COMMAND_REG));
 
     return status;
 }

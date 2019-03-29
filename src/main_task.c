@@ -102,9 +102,7 @@ void light_timer_handler(void)
 
 	close(fd); 
 	
-	pthread_mutex_unlock(&lock);
-
-	
+	pthread_mutex_unlock(&lock);	
 }
 
 
@@ -227,8 +225,8 @@ void *light_thread_handler()
 
 
 
-	pthread_cancel(pthread_self());
-	timer_delete(light_timerid);
+	//pthread_cancel(pthread_self());
+	//timer_delete(light_timerid);
 
 
 }

@@ -1,4 +1,6 @@
+#include <unistd.h>
 #include "temperature_sensor.h"
+
 
 int main()
 {
@@ -11,6 +13,8 @@ int main()
 
 		get_sensortemp(&data);
 		printf("Temp Date = %f\n", data);
+
+		sleep(5);
 	}
 
 
