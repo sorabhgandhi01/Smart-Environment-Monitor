@@ -25,6 +25,50 @@ int read_sensorID(uint8_t *id)
     return status;
 }
 
+int read_timer_reg(uint8_t *data)
+{
+    int status = i2c_read(LIGHT_SENSOR_ADDR, data, (TIMING_REG | COMMAND_REG));
+
+    return status;
+}
+
+int set_integrationTime(uint8_t value)
+{
+    int status;
+    uint8_t data;
+
+    status = i2c_read(LIGHT_SENSOR_ADDR, &data, (TIMING_REG | COMMAND_REG));
+
+    printf("Read %d from timing regx\n", data);
+
+    data &= ~((uint8_t)INTG_TIME_SET_BIT);
+    data |= value;
+
+    printf("Writing %d to timing register\n", data);
+
+    status = i2c_write_byte(LIGHT_SENSOR_ADDR, data, (TIMING_REG | COMMAND_REG));
+
+    return status;
+}
+
+int set_manualControl(uint8_t on)
+{
+    int status;
+    uint8_t data;
+
+    status = i2c_read(LIGHT_SENSOR_ADDR, &data, (TIMING_REG | COMMAND_REG));
+    //printf("Read %d from timing regx\n", data);
+
+    data &= ~((uint8_t)MANUAL_CONTROL_ENABLE_BIT(1));
+    data |= (uint8_t)MANUAL_CONTROL_ENABLE_BIT(on);
+
+    //printf("Writing %d to timing register\n", data);
+
+    status = i2c_write_byte(LIGHT_SENSOR_ADDR, data, (TIMING_REG | COMMAND_REG));
+
+    return status;
+}
+
 int read_channel0(uint16_t *data)
 {
     uint8_t ch0_MSB, ch0_LSB;
