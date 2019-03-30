@@ -7,26 +7,24 @@ char *proj2 = "/tmp/proj1";
 
 int process_temp_data(float *data)
 {
-	int status;
+	// int status;
 
-	status = i2c_open();
+	// status = i2c_open();
 
-    if (status != 0) {
-        printf("Failed to open I2C Bus\n");
-        return -1;
-    }
+ //    if (status != 0) {
+ //        printf("Failed to open I2C Bus\n");
+ //        return -1;
+ //    }
 
 	if (get_sensortemp(data) == -1) {
 		printf("Failed to fetch temperature data\n");
 		return -1;
 	}
 
-	printf("Temp Date = %f\n", data);
-
-	if (i2c_close() != 0) {
-		printf("Failed to close I2C Bus\n");
-		return -1;
-	}
+	// if (i2c_close() != 0) {
+	// 	printf("Failed to close I2C Bus\n");
+	// 	return -1;
+	// }
 
 	return 0;
 }
@@ -101,5 +99,14 @@ void *temp_thread_handler()
     temp_trigger.it_interval.tv_sec = 2;
 
     timer_settime(temp_timerid,0,&temp_trigger,NULL);
+
+    int status;
+
+    status = i2c_open();
+
+    if (status != 0) {
+        printf("Failed to open I2C Bus\n");
+        //return -1;
+    }
 
 }

@@ -7,25 +7,29 @@ char *proj3 = "/tmp/proj1";
 
 int process_light_data(float *data)
 {
-	int status = i2c_open();
+	// int status = i2c_open();
 
-    if (status != 0) {
-        printf("Failed to open I2C Bus\n");
-        return -1;
-    }
+ //    if (status != 0) {
+ //        printf("Failed to open I2C Bus\n");
+ //        return -1;
+ //    }
 
-    if ((sensor_enable()) != MRAA_SUCCESS) {
+ //    if ((sensor_enable()) != MRAA_SUCCESS) {
 
-        printf("Failed to enable the sensor\n");
-        return -1;
-    }
+ //        printf("Failed to enable the sensor\n");
+ //        return -1;
+ //    }
 
     *data = get_sensorlux();
 
-    if (i2c_close() != 0) {
-		printf("Failed to close I2C Bus\n");
-		return -1;
-	}
+ //    if ((sensor_disable()) != MRAA_SUCCESS) {
+ //    	printf("Failed to diable the sensor");
+ //    }
+
+ //    if (i2c_close() != 0) {
+	// 	printf("Failed to close I2C Bus\n");
+	// 	return -1;
+	// }
 
 	return 0;
        
@@ -35,12 +39,15 @@ int process_light_data(float *data)
 void light_timer_handler(void)
 {
 	char buffer[50];
+	float data;
+
 	pthread_mutex_lock(&lock);
 	
 	printf("LIGHT TIMER HANDLER\n");
+	process_light_data(&data);
 
 	int fd = open(proj3,O_WRONLY);
-	sprintf(buffer,"LIGHT THREAD DATA\nTID:%ld\n",syscall(SYS_gettid));
+	sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\t%f\n",syscall(SYS_gettid), data);
 
 	mq_send(logger_queue,buffer,50,0);
 
@@ -102,6 +109,19 @@ void *light_thread_handler()
 	 printf("LIGHT TID:%d\n",light_tid);
 	 // pid_t light_tid = getpid();	//Get thread id
 	 // printf("LIGHT TID:%d\n",light_tid);
+
+	 int status = i2c_open();
+
+    if (status != 0) {
+        printf("Failed to open I2C Bus\n");
+        //return -1;
+    }
+
+    if ((sensor_enable()) != MRAA_SUCCESS) {
+
+        printf("Failed to enable the sensor\n");
+        //return -1;
+    }
 
 
 
