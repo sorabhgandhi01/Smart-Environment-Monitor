@@ -2,8 +2,10 @@
 #include "temp_task.h"
 #include "temperature_sensor.h"
 
-
 char *proj2 = "/tmp/proj1";
+
+int SOCKET=0;
+
 
 int process_temp_data(float *data)
 {
@@ -33,6 +35,7 @@ int process_temp_data(float *data)
 void temp_timer_handler(void)
 {
 	char buffer[50];
+	char socket_buffer[50];
 	float data = 0;
 
 	pthread_mutex_lock(&lock);
@@ -52,6 +55,14 @@ void temp_timer_handler(void)
 	close(fd);
 	
 	pthread_mutex_unlock(&lock);
+
+	sprintf(socket_buffer,"Temperature (C): %f\n",data);
+	if((SOCKET == 1) || (SOCKET == 2) || (SOCKET == 3))
+	{
+		mq_send(socket_queue,socket_buffer,50,0);
+		SOCKET=0;
+	}
+
 
 	
 }

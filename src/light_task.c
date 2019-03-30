@@ -1,10 +1,9 @@
 #include "main_task.h"
 #include "light_task.h"
-
 #include "light_sensor.h"
 
 char *proj3 = "/tmp/proj1";
-
+extern int SOCKET;
 int process_light_data(float *data)
 {
 	// int status = i2c_open();
@@ -39,6 +38,7 @@ int process_light_data(float *data)
 void light_timer_handler(void)
 {
 	char buffer[50];
+	char socket_buffer[50];
 	float data;
 
 	pthread_mutex_lock(&lock);
@@ -57,6 +57,12 @@ void light_timer_handler(void)
 	
 	pthread_mutex_unlock(&lock);
 
+	sprintf(socket_buffer,"Light (Lux): %f\n",data);
+	if(SOCKET == 4)
+	{
+		mq_send(socket_queue,socket_buffer,50,0);
+		SOCKET=0;
+	}
 	
 }
 

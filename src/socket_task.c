@@ -1,9 +1,16 @@
 #include "main_task.h"
 #include "socket_task.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <signal.h>
+
 
 
 char *proj4 = "/tmp/proj1";
-
+int sock;
+int mysock;
+int flag=0;
+extern int SOCKET;
 
 /* Socket Timer Handler */
 void socket_timer_handler(void)
@@ -70,5 +77,93 @@ void *socket_thread_handler()
     socket_trigger.it_interval.tv_sec = 2;
 
     timer_settime(socket_timerid,0,&socket_trigger,NULL);
+
+    printf("Connecting with Client........\n");
+
+    struct sockaddr_in server;
+	char buffer1[1024];		//buffer to hold data.
+	char data_for_client[50];
+	int ret_val;	
+	int len;
+	char filereader[30];
+
+
+	/* Create TCP/IP socket */
+	sock = socket(AF_INET,SOCK_STREAM,0);
+
+
+
+	if(sock < 0)
+	{
+		perror("Failed to create Socket");
+		exit(1);
+	}
+
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = INADDR_ANY;
+	server.sin_port = htons(9000);
+
+
+	/* Call Bind */
+	if(bind(sock, (struct sockaddr *)&server, sizeof(server)))
+	{
+		perror("Bind Failed");
+		exit(1);
+	}
+
+	/* Listen to network */
+	listen(sock,5);
+
+	mysock = accept(sock, (struct sockaddr *) 0,0);
+
+	while(1){
+
+	recv(mysock,buffer1,20,0);
+
+	printf("Server string received:%s\n",buffer1);
+
+	if(!strcmp(buffer1,"1"))
+	{
+		SOCKET = 1;
+		mq_receive(socket_queue,data_for_client,50,0);
+		//fprintf(fptr,"%s\n",buffer);
+		//strcpy()
+		//printf("Temp in C : 25 C\n");
+		//strcpy(buffer1,"Temp in C : 25 C\n");
+		send(mysock,data_for_client,50,0);
+	}
+	else if (!strcmp(buffer1,"2"))
+	{
+		SOCKET = 2;
+		mq_receive(socket_queue,data_for_client,50,0);
+		//printf("Temp in F : 255 C\n");
+		//strcpy(buffer1,"Temp in F : 255 C\n");
+		send(mysock,data_for_client,50,0);
+
+	}
+	else if (!strcmp(buffer1,"3"))
+	{
+		SOCKET = 3;
+		mq_receive(socket_queue,data_for_client,50,0);
+		//printf("Temp in K : 1050 C\n");		
+		//strcpy(buffer1,"Temp in K : 1050 C\n");
+		send(mysock,data_for_client,50,0);
+
+	}
+	else if(!strcmp(buffer1,"4"))
+	{
+		SOCKET = 4;
+		mq_receive(socket_queue,data_for_client,50,0);
+		//fprintf(fptr,"%s\n",buffer);
+		//strcpy()
+		//printf("Temp in C : 25 C\n");
+		//strcpy(buffer1,"Temp in C : 25 C\n");
+		send(mysock,data_for_client,50,0);
+		//printf("Lux : 35.58 C\n");		
+		//strcpy(buffer1,"Lux : 35.58 C\n");
+		//send(mysock,buffer1,20,0);
+
+	}
+}
 
 }

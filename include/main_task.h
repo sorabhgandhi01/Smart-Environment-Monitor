@@ -16,7 +16,8 @@
 
 
 /* Macros */
-#define QUEUE_NAME			"/my_queue"
+#define QUEUE_NAME					"/my_queue"
+#define SOCKET_QUEUE_NAME			"/my_queue_2"
 #define SIZE_OF_QUEUE		10
 #define QUEUE_PERMISSIONS	0666
 
@@ -32,6 +33,8 @@ pthread_mutex_t lock;
 mqd_t logger_queue;
 struct mq_attr queue_attr;
 
+mqd_t socket_queue;
+struct mq_attr socket_queue_attr;
 
 
 /* Buffer for storing queue data */
