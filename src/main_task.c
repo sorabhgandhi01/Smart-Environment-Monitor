@@ -36,7 +36,7 @@ void main_thread_handler(union sigval val)
 	}
 	else
 	{
-		LOG_PRINT("[TEMPERATURE TASK][DEBUG] ALIVE\n");
+		LOG_PRINT("[TEMPERATURE TASK]\t[DEBUG] ALIVE\n");
 	}
 
 	if(current.light_count <= prev.light_count)
@@ -45,7 +45,7 @@ void main_thread_handler(union sigval val)
 	}
 	else
 	{
-		LOG_PRINT("[LIGHT TASK][DEBUG] ALIVE\n");		
+		LOG_PRINT("[LIGHT TASK]\t[DEBUG] ALIVE\n");		
 	}
 
 	if(current.logger_count <= prev.logger_count)
@@ -54,7 +54,7 @@ void main_thread_handler(union sigval val)
 	}
 	else
 	{
-		LOG_PRINT("[LOGGER TASK][DEBUG] ALIVE\n");		
+		LOG_PRINT("[LOGGER TASK]\t[DEBUG] ALIVE\n");		
 	}
 
 	if(current.socket_count <= prev.socket_count)
@@ -63,7 +63,7 @@ void main_thread_handler(union sigval val)
 	}
 	else
 	{
-		LOG_PRINT("[SOCKET TASK][DEBUG] ALIVE\n");		
+		LOG_PRINT("[SOCKET TASK]\t[DEBUG] ALIVE\n");		
 	}
 
 

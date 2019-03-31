@@ -48,6 +48,7 @@ void light_timer_handler(union sigval val)
 	
 	//printf("LIGHT TIMER HANDLER\n");
 	LOG_PRINT("[LIGHT TASK]\t [DEBUG] Invoking timer handler\n");
+	//LOG_PRINT("[LIGHT TASK]\t [DEBUG] Invoking timer handler");
 	
 	data = get_sensorlux();
 
