@@ -29,41 +29,74 @@ void main_thread_handler();
 /* Main Thread Handler */
 void main_thread_handler(union sigval val)
 {
+	char buffer[LOGGER_QUEUE_SIZE];
+
 	if(current.temp_count <= prev.temp_count)
 	{
-		LOG_PRINT("[TEMPERATURE TASK][ERROR] DEAD\n");
+		LOG_PRINT("[MAIN TASK][ERROR] TEMPERATURE TASK DEAD\n");
 
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] TEMPERATURE TASK DEAD");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
 	}
 	else
 	{
-		LOG_PRINT("[TEMPERATURE TASK]\t[DEBUG] ALIVE\n");
+		LOG_PRINT("[MAIN TASK]\t[DEBUG] TEMPERATURE TASK ALIVE\n");
+
+		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] TEMPERATURE TASK ALIVE");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
 	}
 
 	if(current.light_count <= prev.light_count)
 	{
-		LOG_PRINT("[LIGHT TASK][ERROR] DEAD\n");
+		LOG_PRINT("[MAIN TASK][ERROR] LIGHT TASK DEAD\n");
+
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] LIGHT TASK DEAD");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
 	}
 	else
 	{
-		LOG_PRINT("[LIGHT TASK]\t[DEBUG] ALIVE\n");		
+		LOG_PRINT("[MAIN TASK]\t[DEBUG] LIGHT TASK ALIVE\n");
+
+		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] LIGHT TASK ALIVE");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));		
 	}
 
 	if(current.logger_count <= prev.logger_count)
 	{
-		LOG_PRINT("[LOGGER TASK][ERROR] DEAD\n");
+		LOG_PRINT("[MIAN TASK][ERROR] LOGGER TASK DEAD\n");
+
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] LOGGER TASK DEAD");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
 	}
 	else
 	{
-		LOG_PRINT("[LOGGER TASK]\t[DEBUG] ALIVE\n");		
+		LOG_PRINT("[MAIN TASK]\t[DEBUG] LOGGER TASK ALIVE\n");
+
+		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] LOGGER TASK ALIVE");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
 	}
 
 	if(current.socket_count <= prev.socket_count)
 	{
-		LOG_PRINT("[SOCKET TASK][ERROR] DEAD\n");
+		LOG_PRINT("[Main TASK][ERROR] SOCKET TASK DEAD\n");
+
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] SOCKET TASK DEAD");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
 	}
 	else
 	{
-		LOG_PRINT("[SOCKET TASK]\t[DEBUG] ALIVE\n");		
+		LOG_PRINT("[MAIN TASK]\t[DEBUG] SOCKET TASK ALIVE\n");
+
+		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] SOCKET TASK ALIVE");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));	
 	}
 
 
@@ -88,10 +121,10 @@ int main(int argc, char *argv[])
 	LOG_PRINT("[MAIN TASK]\t [DEBUG] Initiating the project\n");	
 
 	/* Create Named Pipe */
-	mkfifo(proj1,QUEUE_PERMISSIONS); //heartbeat signals
+	mkfifo(proj1, QUEUE_PERMISSIONS); //heartbeat signals
 
 	/* Mutex Initialization */
-	if(pthread_mutex_init(&lock,NULL) !=0)
+	if(pthread_mutex_init(&lock, NULL) !=0)
 	{
 		//printf("Mutex Initialization Failed!\n");
 		LOG_PRINT("[MAIN TASK]\t [ERROR] Mutex Initialization Failed\n");

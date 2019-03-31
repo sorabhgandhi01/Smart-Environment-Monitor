@@ -15,19 +15,12 @@ extern int SOCKET;
 /* Socket Timer Handler */
 void socket_timer_handler(union sigval val)
 {
-	//char buffer[LOGGER_QUEUE_SIZE];
 	pthread_mutex_lock(&lock);
-	
-	//printf("SOCKET TIMER HANDLER\n");
+
 	LOG_PRINT("[SOCKET TASK]\t [DEBUG] Invoking timer handler\n");
 	//LOG_PRINT("[SOCKET TASK]\t [DEBUG] Invoking timer handler");
 	
 	int fd = open(proj4,O_WRONLY);
-
-	//sprintf(buffer,"SOCKET THREAD DATA\nTID:%ld\n",syscall(SYS_gettid));
-	//BUILD_MESSAGE(buffer, "[INFO] Socket Thread Data");
-
-	//mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 
 	write(fd,"S",1);
 
