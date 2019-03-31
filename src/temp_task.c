@@ -7,7 +7,7 @@ char *proj2 = "/tmp/proj1";
 int SOCKET=0;
 
 
-int process_temp_data(float *data)
+/*int process_temp_data(float *data)
 {
 	// int status;
 
@@ -29,7 +29,7 @@ int process_temp_data(float *data)
 	// }
 
 	return 0;
-}
+}*/
 
 /* Temperature Timer Handler */
 void temp_timer_handler(void)
@@ -37,16 +37,22 @@ void temp_timer_handler(void)
 	char buffer[50];
 	char socket_buffer[50];
 	float data = 0;
+	int status = 0;
 
 	pthread_mutex_lock(&lock);
 	
 	printf("TEMPERATURE TIMER HANDLER\n");
 
-	process_temp_data(&data);
+	//process_temp_data(&data);
+	status = get_sensortemp(&data);
 	
 	int fd = open(proj2,O_WRONLY);
 
-	sprintf(buffer,"TEMP THREAD DATA\tTID:%ld\ttemp = %f\n",syscall(SYS_gettid), data);
+	if (status == -1) {
+		sprintf(buffer, "TEMP THREAD DATA\tTID:%ld\t Temperature sensor down",syscall(SYS_gettid));
+	} else {
+		sprintf(buffer,"TEMP THREAD DATA\tTID:%ld\ttemp = %f\n",syscall(SYS_gettid), data);
+	}
 
 	mq_send(logger_queue,buffer,50,0);
 

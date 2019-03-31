@@ -1,6 +1,9 @@
 /* @filename:temp_task.h
 */
 
+#ifndef SOCKET_TASK_H
+#define SOCKET_TASK_H
+
 /*pthread variables*/
 pthread_t socket_thread;
 
@@ -15,3 +18,5 @@ void *socket_thread_handler();
 
 /* Function Prototype (posix timer handler) */
 void socket_timer_handler(void);
+
+#endif

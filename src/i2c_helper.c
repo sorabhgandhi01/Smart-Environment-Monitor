@@ -18,12 +18,13 @@ int i2c_open()
     if (i2c_context != NULL) {
         status = 0;
     }
-
-    i2c_context = mraa_i2c_init_raw(MY_I2C_BUS);
-    if (i2c_context == NULL) {
-        perror("Failed to initialize I2C");
-        mraa_deinit();
-        status = -1;
+    else {
+        i2c_context = mraa_i2c_init_raw(MY_I2C_BUS);
+        if (i2c_context == NULL) {
+            perror("Failed to initialize I2C");
+            mraa_deinit();
+            status = -1;
+        }
     }
 
     pthread_mutex_unlock(&i2c_bus_lock); 

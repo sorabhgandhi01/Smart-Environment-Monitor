@@ -4,6 +4,8 @@
 
 char *proj3 = "/tmp/proj1";
 extern int SOCKET;
+
+#if 0
 int process_light_data(float *data)
 {
 	// int status = i2c_open();
@@ -33,6 +35,7 @@ int process_light_data(float *data)
 	return 0;
        
 }
+#endif
 
 /* Light Timer handler */
 void light_timer_handler(void)
@@ -44,10 +47,16 @@ void light_timer_handler(void)
 	pthread_mutex_lock(&lock);
 	
 	printf("LIGHT TIMER HANDLER\n");
-	process_light_data(&data);
+	
+	data = get_sensorlux();
 
 	int fd = open(proj3,O_WRONLY);
-	sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\t%f\n",syscall(SYS_gettid), data);
+
+	if (data == -1) {
+		sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight Sensor Down\n",syscall(SYS_gettid));
+	} else {
+		sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight = %f\n",syscall(SYS_gettid), data);
+	}
 
 	mq_send(logger_queue,buffer,50,0);
 

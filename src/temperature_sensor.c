@@ -67,6 +67,8 @@ int set_extendedMode()
 	if (status == -1)
 		return status;
 
+	//printf("Read data = %x\n", data);
+
 	data |= ((uint16_t)EXTENDED_MODE_SET_BIT);
 
 	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
@@ -81,6 +83,8 @@ int set_defaultMode()
 	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
 	if (status == -1)
 		return status;
+
+	//printf("Read data = %x\n", data);
 
 	data &= ~((uint16_t)EXTENDED_MODE_SET_BIT);
 
@@ -98,6 +102,8 @@ int set_alert(uint8_t value)
 	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
 	if (status == -1)
 		return status;
+
+	//printf("Read data = %x\n", data);
 
 	if (value) {
 		data |= ((uint16_t)POLARITY_SET_BIT);
@@ -118,6 +124,8 @@ int set_sdMode()
 	if (status == -1)
 		return status;
 
+	//printf("Read data = %x\n", data);
+
 	data |= ((uint16_t)SHUTDOWN_MODE_SET_BIT);
 
 	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
@@ -132,6 +140,8 @@ int set_comparatorMode()
 	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
 	if (status == -1)
 		return status;
+
+	//printf("Read data = %x\n", data);
 
 	data &= ~((uint16_t)THERMOSTAT_MODE_SET_BIT);
 
@@ -148,6 +158,8 @@ int set_InterruptMode()
 	if (status == -1)
 		return status;
 
+	//printf("Read data = %x\n", data);
+
 	data |= ((uint16_t)THERMOSTAT_MODE_SET_BIT);
 
 	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
@@ -162,6 +174,8 @@ int set_operationFreq(uint8_t freq)
 	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
 	if (status == -1)
 		return status;
+
+	//printf("Read data = %x\n", data);
 
 	data &= ~((uint16_t)(3<<14));
 

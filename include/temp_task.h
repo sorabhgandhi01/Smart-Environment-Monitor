@@ -1,5 +1,7 @@
 /* @filename:temp_task.h
 */
+#ifndef TEMP_TASK_H
+#define TEMP_TASK_H
 
 /*pthread variables*/
 pthread_t temp_thread;
@@ -17,3 +19,5 @@ void *temp_thread_handler();
 
 /* Function Prototype (posix timer handler) */
 void temp_timer_handler(void);
+
+#endif

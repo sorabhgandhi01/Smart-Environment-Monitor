@@ -8,7 +8,6 @@
 #define MY_I2C_BUS 2
 
 mraa_i2c_context i2c_context;
-//pthread_mutex_t i2c_bus_lock;
 
 int i2c_open();
 
