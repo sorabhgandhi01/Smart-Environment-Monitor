@@ -18,6 +18,6 @@ void *temp_thread_handler();
 
 
 /* Function Prototype (posix timer handler) */
-void temp_timer_handler(void);
+void temp_timer_handler(union sigval val);
 
 #endif

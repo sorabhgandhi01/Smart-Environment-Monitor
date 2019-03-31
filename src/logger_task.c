@@ -4,18 +4,19 @@
 char *proj5 = "/tmp/proj1";
 
 /* Logger Timer Handler */
-void logger_timer_handler(void)
+void logger_timer_handler(union sigval val)
 {
-	char buffer[50];
+	//char buffer[50];
 	//pthread_mutex_lock(&lock);
 
-	printf("LOGGER TIMER HANDLER\n");
+	//printf("LOGGER TIMER HANDLER\n");
+	LOG_PRINT("[LOGGER TASK]\t [DEBUG] Invoking timer handler");
 	
 	int fd = open(proj5,O_WRONLY);
 
-	sprintf(buffer,"LOGGER THREAD DATA\nTID:%ld\n",syscall(SYS_gettid));
+	//sprintf(buffer,"LOGGER THREAD DATA\nTID:%ld\n",syscall(SYS_gettid));
 
-	mq_send(logger_queue,buffer,50,0);
+	//mq_send(logger_queue,buffer,50,0);
 
 	write(fd,"O",1);
 
@@ -29,7 +30,7 @@ void logger_timer_handler(void)
 void *logger_thread_handler()
 {
 
-	char buffer[50];
+	char buffer[256];
 	char logger_info[]="Logging Data......\n";
 
 
@@ -74,11 +75,13 @@ void *logger_thread_handler()
 
     while(1)
     {
-    	fptr = fopen("log.txt","a");
-		mq_receive(logger_queue,buffer,50,0);
-		fprintf(fptr,"%s\n",buffer);
+		mq_receive(logger_queue,buffer,256,0);
+		//fprintf(fptr,"%s\n",buffer);
+		fptr = fopen("log.txt","a");
+		LOG_TO_FILE(fptr, "%s\n", buffer);
 		fclose(fptr);
 
+		memset(buffer, 0, sizeof(buffer));
     }
 
 	// pid_t logger_tid = syscall(SYS_gettid);	//Get thread id	

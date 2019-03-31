@@ -15,4 +15,4 @@ void *light_thread_handler();
 
 
 /* Function Prototype (posix timer handler) */
-void light_timer_handler(void);
+void light_timer_handler(union sigval val);

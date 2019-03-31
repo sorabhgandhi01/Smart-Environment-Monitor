@@ -27,45 +27,45 @@ char *proj1 = "/tmp/proj1";
 
 
 /* Function Prototypes */
-void *main_thread_handler();
+void main_thread_handler();
 
 
-void *main_thread_handler(void)
+void main_thread_handler(union sigval val)
 {
 	if(current.temp_count <= prev.temp_count)
 	{
-		printf("\nTemperature Thread : DEAD\n");
+		LOG_PRINT("[TEMPERATURE TASK][ERROR] DEAD\n");
 	}
 	else
 	{
-		printf("\nTemperature Thread : ALIVE\n");
+		LOG_PRINT("[TEMPERATURE TASK][DEBUG] ALIVE\n");
 	}
 
 	if(current.light_count <= prev.light_count)
 	{
-		printf("\nLight Thread : DEAD\n");
+		LOG_PRINT("[LIGHT TASK][ERROR] DEAD\n");
 	}
 	else
 	{
-		printf("\nLight Thread : ALIVE\n");		
+		LOG_PRINT("[LIGHT TASK][DEBUG] ALIVE\n");		
 	}
 
 	if(current.logger_count <= prev.logger_count)
 	{
-		printf("\nLogger Thread : DEAD\n");
+		LOG_PRINT("[LOGGER TASK][ERROR] DEAD\n");
 	}
 	else
 	{
-		printf("\nLogger Thread : ALIVE\n");		
+		LOG_PRINT("[LOGGER TASK][DEBUG] ALIVE\n");		
 	}
 
 	if(current.socket_count <= prev.socket_count)
 	{
-		printf("\nSocket Thread : DEAD\n");
+		LOG_PRINT("[SOCKET TASK][ERROR] DEAD\n");
 	}
 	else
 	{
-		printf("\nSocket Thread : ALIVE\n");		
+		LOG_PRINT("[SOCKET TASK][DEBUG] ALIVE\n");		
 	}
 
 
@@ -80,7 +80,8 @@ void *main_thread_handler(void)
 /* Main Thread */
 int main(int argc, char *argv[])
 {
-	printf("Initiating the Project!\n");
+	//printf("Initiating the Project!\n");
+	LOG_PRINT("[MAIN TASK]\t [DEBUG] Initiating the project\n");	
 
 	/* Create Named Pipe */
 	mkfifo(proj1,QUEUE_PERMISSIONS); //heartbeat signals
@@ -88,14 +89,15 @@ int main(int argc, char *argv[])
 
 	if(pthread_mutex_init(&lock,NULL) !=0)
 	{
-		printf("Mutex Initialization Failed!\n");
+		//printf("Mutex Initialization Failed!\n");
+		LOG_PRINT("[MAIN TASK]\t [ERROR] Mutex Initialization Failed\n");
 		exit(0);
 	}
 
 	// mqd_t logger_queue;
 	// struct mq_attr queue_attr;
 	queue_attr.mq_maxmsg = SIZE_OF_QUEUE;
-	queue_attr.mq_msgsize = 50;
+	queue_attr.mq_msgsize = 256;
 
 	socket_queue_attr.mq_maxmsg = SIZE_OF_QUEUE;
 	socket_queue_attr.mq_msgsize = 50;
@@ -186,30 +188,38 @@ int main(int argc, char *argv[])
 
 		if(!strcmp(heartbeat,"L"))
 		{
-			printf("Hearbeat from LIGHT\n");
+			//printf("Hearbeat from LIGHT\n");
+			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'LIGHT TASK'\n");
 			(current.light_count)++;
-			printf("Light_check = %d\n",current.light_count);
+			//printf("Light_check = %d\n",current.light_count);
+			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'LIGHT TASK' = %d\n", current.light_count);
 		}
 
 		if(!strcmp(heartbeat,"T"))
 		{
-			printf("Hearbeat from TEMPERATURE\n");
+			//printf("Hearbeat from TEMPERATURE\n");
+			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'TEMPERATURE TASK'\n");
 			(current.temp_count)++;
-			printf("Temp_check = %d\n",current.temp_count);
+			//printf("Temp_check = %d\n",current.temp_count);
+			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'TEMPERATURE TASK' = %d\n", current.temp_count);
 		}
 
 		if(!strcmp(heartbeat,"O"))
 		{
-			printf("Hearbeat from LOGGER\n");
+			//printf("Hearbeat from LOGGER\n");
+			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'LOGGER TASK'\n");
 			(current.logger_count)++;
-			printf("Logger_check = %d\n",current.logger_count);
+			//printf("Logger_check = %d\n",current.logger_count);
+			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'LOGGER TASK' = %d\n", current.logger_count);
 		}
 
 		if(!strcmp(heartbeat,"S"))
 		{
-			printf("Hearbeat from SOCKET\n");
+			//printf("Hearbeat from SOCKET\n");
+			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'SOCKET TASK'\n");
 			(current.socket_count)++;
-			printf("Socket_check = %d\n",current.socket_count);
+			//printf("Socket_check = %d\n",current.socket_count);
+			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'SOCKET TASK' = %d\n", current.socket_count);
 		}
 
 

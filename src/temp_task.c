@@ -7,41 +7,18 @@ char *proj2 = "/tmp/proj1";
 int SOCKET=0;
 
 
-/*int process_temp_data(float *data)
-{
-	// int status;
-
-	// status = i2c_open();
-
- //    if (status != 0) {
- //        printf("Failed to open I2C Bus\n");
- //        return -1;
- //    }
-
-	if (get_sensortemp(data) == -1) {
-		printf("Failed to fetch temperature data\n");
-		return -1;
-	}
-
-	// if (i2c_close() != 0) {
-	// 	printf("Failed to close I2C Bus\n");
-	// 	return -1;
-	// }
-
-	return 0;
-}*/
-
 /* Temperature Timer Handler */
-void temp_timer_handler(void)
+void temp_timer_handler(union sigval val)
 {
-	char buffer[50];
+	char buffer[256];
 	char socket_buffer[50];
 	float data = 0;
 	int status = 0;
 
 	pthread_mutex_lock(&lock);
 	
-	printf("TEMPERATURE TIMER HANDLER\n");
+	//printf("TEMPERATURE TIMER HANDLER\n");
+	LOG_PRINT("[TEMPERATURE TASK]\t [DEBUG] Invoking timer handler");
 
 	//process_temp_data(&data);
 	status = get_sensortemp(&data);
@@ -49,12 +26,14 @@ void temp_timer_handler(void)
 	int fd = open(proj2,O_WRONLY);
 
 	if (status == -1) {
-		sprintf(buffer, "TEMP THREAD DATA\tTID:%ld\t Temperature sensor down",syscall(SYS_gettid));
+		//sprintf(buffer, "TEMP THREAD DATA\tTID:%ld\t Temperature sensor down",syscall(SYS_gettid));
+		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK]\t[ERROR] Temperature sensor down");
 	} else {
-		sprintf(buffer,"TEMP THREAD DATA\tTID:%ld\ttemp = %f\n",syscall(SYS_gettid), data);
+		//sprintf(buffer,"TEMP THREAD DATA\tTID:%ld\ttemp = %f\n",syscall(SYS_gettid), data);
+		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK]\t[INFO] Temperature = %f C", data);
 	}
 
-	mq_send(logger_queue,buffer,50,0);
+	mq_send(logger_queue,buffer,256,0);
 
 	write(fd,"T",1);
 

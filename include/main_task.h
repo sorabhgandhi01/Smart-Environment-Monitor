@@ -1,3 +1,6 @@
+#ifndef MAIN_TASK_H
+#define MAIN_TASK_H
+
 /* Standard C Library Headers */
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -13,7 +16,20 @@
 #include <time.h>
 #include <sys/time.h>
 #include <mqueue.h>
+#include <stdarg.h>
+#include <time.h>
 
+#define BUILD_MESSAGE(buffer, format, ...) \
+do{ \
+sprintf(buffer, "[PID:%d][TID:%ld][Timestamp = %lu]" format, getpid(), syscall(SYS_gettid), time(NULL), ##__VA_ARGS__); \
+}while(0)
+
+#define LOG_PRINT(format, ...) \
+do{ \
+	printf("[PID:%d][TID:%ld]", getpid(), syscall(SYS_gettid)); \
+	printf(format, ##__VA_ARGS__); \
+	fflush(stdout); \
+}while(0)
 
 /* Macros */
 #define QUEUE_NAME					"/my_queue"
@@ -40,3 +56,4 @@ struct mq_attr socket_queue_attr;
 /* Buffer for storing queue data */
 char buffer[50];
 
+#endif

@@ -38,27 +38,30 @@ int process_light_data(float *data)
 #endif
 
 /* Light Timer handler */
-void light_timer_handler(void)
+void light_timer_handler(union sigval val)
 {
-	char buffer[50];
+	char buffer[256];
 	char socket_buffer[50];
 	float data;
 
 	pthread_mutex_lock(&lock);
 	
-	printf("LIGHT TIMER HANDLER\n");
+	//printf("LIGHT TIMER HANDLER\n");
+	LOG_PRINT("[LIGHT TASK]\t [DEBUG] Invoking timer handler");
 	
 	data = get_sensorlux();
 
 	int fd = open(proj3,O_WRONLY);
 
 	if (data == -1) {
-		sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight Sensor Down\n",syscall(SYS_gettid));
+		//sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight Sensor Down\n",syscall(SYS_gettid));
+		BUILD_MESSAGE(buffer, "[LIGHT TASK]\t[ERROR] Light sensor down");
 	} else {
-		sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight = %f\n",syscall(SYS_gettid), data);
+		//sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight = %f\n",syscall(SYS_gettid), data);
+		BUILD_MESSAGE(buffer, "[LIGHT TASK]\t[INFO] LUX = %f", data);
 	}
 
-	mq_send(logger_queue,buffer,50,0);
+	mq_send(logger_queue,buffer,256,0);
 
 	write(fd,"L",1);
 
@@ -120,8 +123,8 @@ void *light_thread_handler()
 
 	
 
-	 pid_t light_tid = syscall(SYS_gettid);	//Get thread id
-	 printf("LIGHT TID:%d\n",light_tid);
+	 //pid_t light_tid = syscall(SYS_gettid);	//Get thread id
+	 //printf("LIGHT TID:%d\n",light_tid);
 	 // pid_t light_tid = getpid();	//Get thread id
 	 // printf("LIGHT TID:%d\n",light_tid);
 

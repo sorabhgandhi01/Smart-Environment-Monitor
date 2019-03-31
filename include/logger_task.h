@@ -1,6 +1,17 @@
 /* @filename:logger_task.h
 */
 
+#ifndef LOGGER_TASK_H
+#define LOGGER_TASK_H
+
+
+
+#define LOG_TO_FILE(fp, format, ...) \
+do{ \
+	fprintf(fp, format, ##__VA_ARGS__); \
+	fflush(fp); \
+}while(0)
+
 /*pthread variables*/
 pthread_t logger_thread;
 
@@ -14,4 +25,6 @@ pid_t logger_tid;
 void *logger_thread_handler();
 
 /* Function Prototype (posix timer handler) */
-void logger_timer_handler(void);
+void logger_timer_handler(union sigval val);
+
+#endif
