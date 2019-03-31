@@ -26,7 +26,6 @@ void socket_timer_handler(void)
 
 	mq_send(logger_queue,buffer,50,0);
 
-
 	write(fd,"S",1);
 
 	close(fd);
