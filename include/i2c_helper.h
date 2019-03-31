@@ -1,3 +1,5 @@
+#ifndef I2C_HELPER_H
+#define I2C_HELPER_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,3 +24,5 @@ int i2c_write_word(uint8_t slave_addr, uint16_t data, uint8_t command);
 int i2c_read(uint8_t slave_addr, uint8_t *data, uint8_t command);
 
 int i2c_read_bytes(uint8_t slave_addr, uint8_t *data, uint8_t command, size_t len);
+
+#endif

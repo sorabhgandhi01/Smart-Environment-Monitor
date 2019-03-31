@@ -1,4 +1,5 @@
-
+#ifndef LED_H
+#define LED_H
 
 #include <unistd.h>
 #include <stdio.h> 
@@ -40,3 +41,5 @@ void user_led(char *gpio_number,char *gpio_direction,char *direction,char *gpio_
 
 #define LOGGER_ERROR_LED_ON()		user_led(LOGGER_THREAD,LOGGER_GPIO_DIRECTION,IO_DIRECTION,LOGGER_GPIO_PATH,1)
 #define LOGGER_ERROR_LED_OFF()		user_led(LOGGER_THREAD,LOGGER_GPIO_DIRECTION,IO_DIRECTION,LOGGER_GPIO_PATH,0)
+
+#endif

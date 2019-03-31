@@ -1,5 +1,3 @@
-/* @filename:temp_task.h
-*/
 #ifndef TEMP_TASK_H
 #define TEMP_TASK_H
 

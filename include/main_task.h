@@ -21,7 +21,7 @@
 
 #define BUILD_MESSAGE(buffer, format, ...) \
 do{ \
-sprintf(buffer, "[PID:%d][TID:%ld][Timestamp = %lu]" format, getpid(), syscall(SYS_gettid), time(NULL), ##__VA_ARGS__); \
+sprintf(buffer, "[PID:%d][TID:%ld][Timestamp = %lu]\t" format, getpid(), syscall(SYS_gettid), time(NULL), ##__VA_ARGS__); \
 }while(0)
 
 #define LOG_PRINT(format, ...) \

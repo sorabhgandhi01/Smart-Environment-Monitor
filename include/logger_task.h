@@ -1,6 +1,3 @@
-/* @filename:logger_task.h
-*/
-
 #ifndef LOGGER_TASK_H
 #define LOGGER_TASK_H
 

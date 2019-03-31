@@ -1,6 +1,3 @@
-/* @filename:temp_task.h
-*/
-
 #ifndef SOCKET_TASK_H
 #define SOCKET_TASK_H
 
