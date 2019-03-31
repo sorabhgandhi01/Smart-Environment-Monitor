@@ -14,6 +14,12 @@
 #define TLOW_REG                (0X02)
 #define THIGH_REG               (0x03)
 
+#define EXTENDED_MODE_SET_BIT				(1<<12)
+#define THERMOSTAT_MODE_SET_BIT				(1<<1)
+#define SHUTDOWN_MODE_SET_BIT				(1)
+#define POLARITY_SET_BIT					(1<<2)
+
+
 int write_tlow_reg(uint16_t temp);
 
 int read_tlow_reg(uint16_t *temp);
@@ -21,6 +27,22 @@ int read_tlow_reg(uint16_t *temp);
 int write_thigh_reg(uint16_t temp);
 
 int read_thigh_reg(uint16_t *temp);
+
+int set_alert(uint8_t value);
+
+int set_defaultMode();
+
+int set_extendedMode();
+
+int set_sdMode();
+
+int set_comparatorMode();
+
+int set_InterruptMode();
+
+int set_operationFreq(uint8_t freq);
+
+int read_alertBit(uint8_t *value);
 
 int get_sensortemp(float *temp);
 

@@ -32,6 +32,32 @@ int read_timer_reg(uint8_t *data)
     return status;
 }
 
+int enable_interrupt(uint8_t set)
+{
+    int status;
+    uint8_t data;
+
+    status = i2c_read(LIGHT_SENSOR_ADDR, &data, (INTERRUPT_REG | COMMAND_REG));
+
+    if (set) {
+        data |= (uint8_t)(1<<4);
+    }
+    else {
+        data &= ~((uint8_t)(1<<4));
+    }
+
+    status = i2c_write_byte(LIGHT_SENSOR_ADDR, data, (INTERRUPT_REG | COMMAND_REG));
+
+    return status;
+}
+
+int clear_pendingInterrupt()
+{
+    int status = i2c_write(LIGHT_SENSOR_ADDR, (CLEAR_PENDING_INT_BIT | COMMAND_REG));
+
+    return status;
+}
+
 int set_integrationTime(uint8_t value)
 {
     int status;

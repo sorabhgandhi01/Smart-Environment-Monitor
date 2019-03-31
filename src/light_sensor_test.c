@@ -63,35 +63,35 @@ int main()
     }
 
     i2c_read(LIGHT_SENSOR_ADDR, &time_data, (TIMING_REG | COMMAND_REG));
-    printf("Read %d from timing regx\n", time_data);
+    printf("Read %d from timing reg\n", time_data);
 
     if (set_integrationTime(0) != 0) {
         printf("Failed to write to timer register\n");
     }
 
     read_timer_reg(&time_data);
-    printf("Read %d from timing regx\n", time_data);
+    printf("Read %d from timing reg\n", time_data);
 
     if (set_integrationTime(1) != 0) {
         printf("Failed to write to timer register\n");
     }
 
     read_timer_reg(&time_data);
-    printf("Read %d from timing regx\n", time_data);
+    printf("Read %d from timing reg\n", time_data);
 
     if (set_integrationTime(2) != 0) {
         printf("Failed to write to timer register\n");
     }
 
     read_timer_reg(&time_data);
-    printf("Read %d from timing regx\n", time_data);
+    printf("Read %d from timing reg\n", time_data);
 
     if (set_integrationTime(3) != 0) {
         printf("Failed to write to timer register\n");
     }
 
     read_timer_reg(&time_data);
-    printf("Read %d from timing regx\n", time_data);
+    printf("Read %d from timing reg\n", time_data);
 
     if (set_manualControl(0) != 0) {
         printf("Failed to write to timer register\n");

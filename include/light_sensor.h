@@ -28,6 +28,7 @@
 #define POWER_OFF_BIT (0x00)
 #define MANUAL_CONTROL_ENABLE_BIT(x) (x<<3)
 #define INTG_TIME_SET_BIT (0x03)
+#define CLEAR_PENDING_INT_BIT (1<<6)
 
 //Write to Control register
 int sensor_enable();
@@ -37,6 +38,10 @@ int sensor_disable();
 int read_sensorID(uint8_t *id);
 
 int read_timer_reg(uint8_t *data);
+
+int enable_interrupt(uint8_t set);
+
+int clear_pendingInterrupt();
 
 int set_integrationTime(uint8_t value);
 
