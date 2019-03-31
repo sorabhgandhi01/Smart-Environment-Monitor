@@ -18,7 +18,7 @@ void temp_timer_handler(union sigval val)
 	pthread_mutex_lock(&lock);
 	
 	//printf("TEMPERATURE TIMER HANDLER\n");
-	LOG_PRINT("[TEMPERATURE TASK]\t [DEBUG] Invoking timer handler");
+	//LOG_PRINT("[TEMPERATURE TASK]\t [DEBUG] Invoking timer handler");
 
 	//process_temp_data(&data);
 	status = get_sensortemp(&data);

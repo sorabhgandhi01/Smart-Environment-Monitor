@@ -10,7 +10,7 @@ void logger_timer_handler(union sigval val)
 	//pthread_mutex_lock(&lock);
 
 	//printf("LOGGER TIMER HANDLER\n");
-	LOG_PRINT("[LOGGER TASK]\t [DEBUG] Invoking timer handler");
+	//LOG_PRINT("[LOGGER TASK]\t [DEBUG] Invoking timer handler");
 	
 	int fd = open(proj5,O_WRONLY);
 

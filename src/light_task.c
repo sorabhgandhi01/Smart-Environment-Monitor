@@ -47,7 +47,7 @@ void light_timer_handler(union sigval val)
 	pthread_mutex_lock(&lock);
 	
 	//printf("LIGHT TIMER HANDLER\n");
-	LOG_PRINT("[LIGHT TASK]\t [DEBUG] Invoking timer handler");
+	//LOG_PRINT("[LIGHT TASK]\t [DEBUG] Invoking timer handler");
 	
 	data = get_sensorlux();
 
