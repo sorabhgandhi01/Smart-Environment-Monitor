@@ -47,7 +47,7 @@ void light_timer_handler(union sigval val)
 	pthread_mutex_lock(&lock);
 	
 	//printf("LIGHT TIMER HANDLER\n");
-	LOG_PRINT("[LIGHT TASK]\t [DEBUG] Invoking timer handler");
+	LOG_PRINT("[LIGHT TASK]\t [DEBUG] Invoking timer handler\n");
 	
 	data = get_sensorlux();
 
@@ -55,10 +55,10 @@ void light_timer_handler(union sigval val)
 
 	if (data == -1) {
 		//sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight Sensor Down\n",syscall(SYS_gettid));
-		BUILD_MESSAGE(buffer, "[LIGHT TASK]\t[ERROR] Light sensor down");
+		BUILD_MESSAGE(buffer, "[LIGHT TASK] [ERROR] Light sensor down");
 	} else {
 		//sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight = %f\n",syscall(SYS_gettid), data);
-		BUILD_MESSAGE(buffer, "[LIGHT TASK]\t[INFO] LUX = %f", data);
+		BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] LUX = %f", data);
 	}
 
 	mq_send(logger_queue,buffer,256,0);

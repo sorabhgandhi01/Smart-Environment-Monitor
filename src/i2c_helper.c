@@ -1,4 +1,3 @@
-
 #include "i2c_helper.h"
 
 pthread_mutex_t i2c_bus_lock = PTHREAD_MUTEX_INITIALIZER;

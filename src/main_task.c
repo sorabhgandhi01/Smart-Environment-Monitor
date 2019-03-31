@@ -5,10 +5,8 @@
 #include "socket_task.h"
 #include "logger_task.h"
 
-
 /* Posix timer variables */
 static timer_t main_timerid;
-
 
 /* Thread Alive/Dead Counter check structure */
 typedef struct{
@@ -25,16 +23,16 @@ thread_status_tracker_t prev = {0};
 
 char *proj1 = "/tmp/proj1";
 
-
 /* Function Prototypes */
 void main_thread_handler();
 
-
+/* Main Thread Handler */
 void main_thread_handler(union sigval val)
 {
 	if(current.temp_count <= prev.temp_count)
 	{
 		LOG_PRINT("[TEMPERATURE TASK][ERROR] DEAD\n");
+
 	}
 	else
 	{
@@ -86,7 +84,7 @@ int main(int argc, char *argv[])
 	/* Create Named Pipe */
 	mkfifo(proj1,QUEUE_PERMISSIONS); //heartbeat signals
 
-
+	/* Mutex Initialization */
 	if(pthread_mutex_init(&lock,NULL) !=0)
 	{
 		//printf("Mutex Initialization Failed!\n");
@@ -94,17 +92,18 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	// mqd_t logger_queue;
-	// struct mq_attr queue_attr;
+	/* Populating Message queue structure */
 	queue_attr.mq_maxmsg = SIZE_OF_QUEUE;
 	queue_attr.mq_msgsize = 256;
 
+	/* Populating Message queue structure [Socket Task] */
 	socket_queue_attr.mq_maxmsg = SIZE_OF_QUEUE;
 	socket_queue_attr.mq_msgsize = 50;
 
-
+	/* Open Message queue */
 	logger_queue = mq_open(QUEUE_NAME,O_CREAT | O_RDWR, QUEUE_PERMISSIONS,&queue_attr);
 
+	/* Open Message queue [Socket Task] */
 	socket_queue = mq_open(SOCKET_QUEUE_NAME,O_CREAT | O_RDWR, QUEUE_PERMISSIONS,&socket_queue_attr);
 
 	if(logger_queue == (mqd_t)-1)
@@ -119,14 +118,14 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
+	/* Create Logger Thread */
+	pthread_create(&logger_thread,NULL,logger_thread_handler,(void *)NULL);
+
 	/* Create Light Thread */
 	pthread_create(&light_thread,NULL,light_thread_handler,(void *)NULL);
 
 	/* Create Temperature Thread */
 	pthread_create(&temp_thread,NULL,temp_thread_handler,(void *)NULL);
-
-	/* Create Logger Thread */
-	pthread_create(&logger_thread,NULL,logger_thread_handler,(void *)NULL);
 
 	/* Create Socket Thread */
 	pthread_create(&socket_thread,NULL,socket_thread_handler,(void *)NULL);
@@ -179,7 +178,6 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		
-
 		int fd = open(proj1,O_RDONLY); 
 
 		memset(heartbeat,0,1);
@@ -221,13 +219,8 @@ int main(int argc, char *argv[])
 			//printf("Socket_check = %d\n",current.socket_count);
 			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'SOCKET TASK' = %d\n", current.socket_count);
 		}
-
-
 		//close(fd);
-
 		//printf("%s\n",heartbeat);
-	
-
 	}
 
 	pthread_join(light_thread,NULL);
@@ -236,9 +229,6 @@ int main(int argc, char *argv[])
 	pthread_join(socket_thread,NULL);
 
 	pthread_mutex_destroy(&lock);
-
-
-
 
 	return 0;
 }

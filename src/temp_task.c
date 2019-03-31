@@ -18,7 +18,7 @@ void temp_timer_handler(union sigval val)
 	pthread_mutex_lock(&lock);
 	
 	//printf("TEMPERATURE TIMER HANDLER\n");
-	LOG_PRINT("[TEMPERATURE TASK]\t [DEBUG] Invoking timer handler");
+	LOG_PRINT("[TEMPERATURE TASK]\t [DEBUG] Invoking timer handler\n");
 
 	//process_temp_data(&data);
 	status = get_sensortemp(&data);
@@ -27,10 +27,10 @@ void temp_timer_handler(union sigval val)
 
 	if (status == -1) {
 		//sprintf(buffer, "TEMP THREAD DATA\tTID:%ld\t Temperature sensor down",syscall(SYS_gettid));
-		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK]\t[ERROR] Temperature sensor down");
+		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK] [ERROR] Temperature sensor down");
 	} else {
 		//sprintf(buffer,"TEMP THREAD DATA\tTID:%ld\ttemp = %f\n",syscall(SYS_gettid), data);
-		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK]\t[INFO] Temperature = %f C", data);
+		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK] [INFO] Temperature = %f C", data);
 	}
 
 	mq_send(logger_queue,buffer,256,0);
