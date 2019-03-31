@@ -78,6 +78,12 @@ void main_thread_handler(union sigval val)
 /* Main Thread */
 int main(int argc, char *argv[])
 {
+	/*check for appropriate commandline arguments*/
+	if ((argc < 2) || (argc > 2)) {				
+		printf("Usage --> ./[%s] [LOG FILENAME]\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
 	//printf("Initiating the Project!\n");
 	LOG_PRINT("[MAIN TASK]\t [DEBUG] Initiating the project\n");	
 
@@ -119,7 +125,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Create Logger Thread */
-	pthread_create(&logger_thread,NULL,logger_thread_handler,(void *)NULL);
+	pthread_create(&logger_thread,NULL,logger_thread_handler,(void *)argv[1]);
 
 	/* Create Light Thread */
 	pthread_create(&light_thread,NULL,light_thread_handler,(void *)NULL);

@@ -28,12 +28,13 @@ void logger_timer_handler(union sigval val)
 
 
 
-void *logger_thread_handler()
+void *logger_thread_handler(void *arg)
 {
 
 	char buffer[256];
 	char logger_info[]="Logging Data......\n";
 
+	file_name = (char *)arg;
 
 	//while(1){
 	struct sigevent logger_sev;
@@ -78,7 +79,7 @@ void *logger_thread_handler()
     {
 		mq_receive(logger_queue,buffer,256,0);
 		//fprintf(fptr,"%s\n",buffer);
-		fptr = fopen("log.txt","a");
+		fptr = fopen(file_name, "a");
 		LOG_TO_FILE(fptr, "%s\n", buffer);
 		fclose(fptr);
 

@@ -18,6 +18,8 @@ static timer_t logger_timerid;
 /* Thread IDs */
 pid_t logger_tid;
 
+char *file_name;
+
 /* Function Prototype for thread handler */
 void *logger_thread_handler();
 
