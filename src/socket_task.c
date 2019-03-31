@@ -18,7 +18,6 @@ void socket_timer_handler(union sigval val)
 	pthread_mutex_lock(&lock);
 
 	LOG_PRINT("[SOCKET TASK]\t [DEBUG] Invoking timer handler\n");
-	//LOG_PRINT("[SOCKET TASK]\t [DEBUG] Invoking timer handler");
 	
 	int fd = open(proj4,O_WRONLY);
 
@@ -33,6 +32,7 @@ void socket_timer_handler(union sigval val)
 void *socket_thread_handler()
 {
 	char socket_buffer[50];
+	char log_buffer[LOGGER_QUEUE_SIZE];
 	char socket_info[]="Socket Thread Alive......\n";
 
 
@@ -90,6 +90,10 @@ void *socket_thread_handler()
 
 	if(sock < 0)
 	{
+		BUILD_MESSAGE(log_buffer, "[SOCKET TASK][ERROR] FAILED TO CREATE SOCKET");
+		mq_send(logger_queue, log_buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(log_buffer, 0, sizeof(log_buffer));
+
 		perror("Failed to create Socket");
 		exit(1);
 	}
@@ -102,6 +106,10 @@ void *socket_thread_handler()
 	/* Call Bind */
 	if(bind(sock, (struct sockaddr *)&server, sizeof(server)))
 	{
+		BUILD_MESSAGE(log_buffer, "[SOCKET TASK][ERROR] FAILED TO BIND SOCKET");
+		mq_send(logger_queue, log_buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(log_buffer, 0, sizeof(log_buffer));
+
 		perror("Bind Failed");
 		exit(1);
 	}
@@ -116,6 +124,10 @@ void *socket_thread_handler()
 	recv(mysock,buffer1,20,0);
 
 	printf("Server string received:%s\n",buffer1);
+
+	BUILD_MESSAGE(log_buffer, "[SOCKET TASK][INFO] RECIEVED NEW REMOTE REQUEST -> %s", buffer1);
+	mq_send(logger_queue, log_buffer, LOGGER_QUEUE_SIZE, 0);
+	memset(log_buffer, 0, sizeof(log_buffer));
 
 	if(!strcmp(buffer1,"1"))
 	{
@@ -159,6 +171,12 @@ void *socket_thread_handler()
 		//send(mysock,buffer1,20,0);
 
 	}
+
+	BUILD_MESSAGE(log_buffer, "[SOCKET TASK][INFO] SENDING RESPONSE TO CLIENT -> %s", data_for_client);
+	mq_send(logger_queue, log_buffer, LOGGER_QUEUE_SIZE, 0);
+	memset(log_buffer, 0, sizeof(log_buffer));
+	memset(data_for_client, 0, sizeof(data_for_client));
+	memset(buffer1, 0, sizeof(buffer1));
 }
 
 }
