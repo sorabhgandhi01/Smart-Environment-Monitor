@@ -19,11 +19,8 @@ void socket_timer_handler(union sigval val)
 	pthread_mutex_lock(&lock);
 	
 	//printf("SOCKET TIMER HANDLER\n");
-<<<<<<< HEAD
 	LOG_PRINT("[SOCKET TASK]\t [DEBUG] Invoking timer handler\n");
-=======
 	//LOG_PRINT("[SOCKET TASK]\t [DEBUG] Invoking timer handler");
->>>>>>> 69bba1077295c6a51e652bd2fc91ed70f6d813cc
 	
 	int fd = open(proj4,O_WRONLY);
 
