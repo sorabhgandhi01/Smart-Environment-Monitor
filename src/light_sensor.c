@@ -32,6 +32,20 @@ int read_timer_reg(uint8_t *data)
     return status;
 }
 
+int read_interrupt_reg(uint8_t *data)
+{
+    int status = i2c_read(LIGHT_SENSOR_ADDR, data, (INTERRUPT_REG | COMMAND_REG));
+
+    return status;   
+}
+
+int read_command_reg(uint8_t *data)
+{
+    int status = i2c_read(LIGHT_SENSOR_ADDR, data, (COMMAND_REG));
+
+    return status;
+}
+
 int enable_interrupt(uint8_t set)
 {
     int status;
@@ -65,12 +79,12 @@ int set_integrationTime(uint8_t value)
 
     status = i2c_read(LIGHT_SENSOR_ADDR, &data, (TIMING_REG | COMMAND_REG));
 
-    printf("Read %d from timing regx\n", data);
+    //printf("Read %d from timing regx\n", data);
 
     data &= ~((uint8_t)INTG_TIME_SET_BIT);
     data |= value;
 
-    printf("Writing %d to timing register\n", data);
+    //printf("Writing %d to timing register\n", data);
 
     status = i2c_write_byte(LIGHT_SENSOR_ADDR, data, (TIMING_REG | COMMAND_REG));
 

@@ -28,6 +28,8 @@ int write_thigh_reg(uint16_t temp);
 
 int read_thigh_reg(uint16_t *temp);
 
+int read_configuration_reg(uint16_t *data);
+
 int set_alert(uint8_t value);
 
 int set_defaultMode();

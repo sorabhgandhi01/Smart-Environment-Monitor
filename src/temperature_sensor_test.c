@@ -1,24 +1,39 @@
 #include <unistd.h>
+#include <stdint.h>
 #include "temperature_sensor.h"
 
+#include <assert.h>
 
 int main()
 {
-	float data = 0;
+	int status;
+	uint16_t write_data = 0;
+	uint16_t read_data = 0;
 
-	i2c_open();
+	status = i2c_open();
+	assert(status == 0);
 
-	while (1)
-	{
+	write_data = 75;
+	status = write_tlow_reg(write_data);
+	assert(status == 0);
 
-		get_sensortemp(&data);
-		printf("Temp Date = %f\n", data);
+	status = read_tlow_reg(&read_data);
+	assert(status == 0);
+	assert(write_data == read_data);
 
-		sleep(5);
-	}
+	write_data = 80;
+	status = write_thigh_reg(write_data);
+	assert(status == 0);
 
+	status = read_thigh_reg(&read_data);
+	assert(status == 0);
+	assert(write_data == read_data);
 
-	i2c_close();
+	status = set_extendedMode();
+	assert(status == 0);
+
+	status = i2c_close();
+	assert(status == 0);
 
 	return 0;
 }

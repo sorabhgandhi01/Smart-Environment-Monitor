@@ -47,6 +47,18 @@ int read_thigh_reg(uint16_t *temp)
 	return status;
 }
 
+int read_configuration_reg(uint16_t *data)
+{
+	uint16_t value = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&value, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	*data = value;
+	return status;
+}
+
 int set_extendedMode()
 {
 	uint16_t data = 0;
