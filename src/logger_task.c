@@ -31,7 +31,7 @@ void logger_timer_handler(union sigval val)
 void *logger_thread_handler(void *arg)
 {
 
-	char buffer[256];
+	char buffer[LOGGER_QUEUE_SIZE];
 	char logger_info[]="Logging Data......\n";
 
 	file_name = (char *)arg;
@@ -72,12 +72,12 @@ void *logger_thread_handler(void *arg)
 	 */
     logger_trigger.it_interval.tv_sec = 2;
 
-    timer_settime(logger_timerid,0,&logger_trigger,NULL);
+    timer_settime(logger_timerid, 0, &logger_trigger, NULL);
 
 
     while(1)
     {
-		mq_receive(logger_queue,buffer,256,0);
+		mq_receive(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 		//fprintf(fptr,"%s\n",buffer);
 		fptr = fopen(file_name, "a");
 		LOG_TO_FILE(fptr, "%s\n", buffer);

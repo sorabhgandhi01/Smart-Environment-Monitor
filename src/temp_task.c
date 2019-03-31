@@ -10,7 +10,7 @@ int SOCKET=0;
 /* Temperature Timer Handler */
 void temp_timer_handler(union sigval val)
 {
-	char buffer[256];
+	char buffer[LOGGER_QUEUE_SIZE];
 	char socket_buffer[50];
 	float data = 0;
 	int status = 0;
@@ -34,7 +34,7 @@ void temp_timer_handler(union sigval val)
 		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK] [INFO] Temperature = %f C", data);
 	}
 
-	mq_send(logger_queue,buffer,256,0);
+	mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 
 	write(fd,"T",1);
 
@@ -45,7 +45,7 @@ void temp_timer_handler(union sigval val)
 	sprintf(socket_buffer,"Temperature (C): %f\n",data);
 	if((SOCKET == 1) || (SOCKET == 2) || (SOCKET == 3))
 	{
-		mq_send(socket_queue,socket_buffer,50,0);
+		mq_send(socket_queue, socket_buffer, 50, 0);
 		SOCKET=0;
 	}
 
@@ -95,7 +95,7 @@ void *temp_thread_handler()
 	 */
     temp_trigger.it_interval.tv_sec = 2;
 
-    timer_settime(temp_timerid,0,&temp_trigger,NULL);
+    timer_settime(temp_timerid, 0, &temp_trigger, NULL);
 
     int status;
 

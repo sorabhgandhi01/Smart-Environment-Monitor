@@ -100,17 +100,17 @@ int main(int argc, char *argv[])
 
 	/* Populating Message queue structure */
 	queue_attr.mq_maxmsg = SIZE_OF_QUEUE;
-	queue_attr.mq_msgsize = 256;
+	queue_attr.mq_msgsize = LOGGER_QUEUE_SIZE;
 
 	/* Populating Message queue structure [Socket Task] */
 	socket_queue_attr.mq_maxmsg = SIZE_OF_QUEUE;
 	socket_queue_attr.mq_msgsize = 50;
 
 	/* Open Message queue */
-	logger_queue = mq_open(QUEUE_NAME,O_CREAT | O_RDWR, QUEUE_PERMISSIONS,&queue_attr);
+	logger_queue = mq_open(QUEUE_NAME, O_CREAT | O_RDWR, QUEUE_PERMISSIONS, &queue_attr);
 
 	/* Open Message queue [Socket Task] */
-	socket_queue = mq_open(SOCKET_QUEUE_NAME,O_CREAT | O_RDWR, QUEUE_PERMISSIONS,&socket_queue_attr);
+	socket_queue = mq_open(SOCKET_QUEUE_NAME, O_CREAT | O_RDWR, QUEUE_PERMISSIONS, &socket_queue_attr);
 
 	if(logger_queue == (mqd_t)-1)
 	{

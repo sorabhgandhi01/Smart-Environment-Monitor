@@ -31,6 +31,8 @@ do{ \
 	fflush(stdout); \
 }while(0)
 
+#define LOGGER_QUEUE_SIZE (256)
+
 /* Macros */
 #define QUEUE_NAME					"/my_queue"
 #define SOCKET_QUEUE_NAME			"/my_queue_2"

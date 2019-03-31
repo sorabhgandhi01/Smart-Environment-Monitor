@@ -40,7 +40,7 @@ int process_light_data(float *data)
 /* Light Timer handler */
 void light_timer_handler(union sigval val)
 {
-	char buffer[256];
+	char buffer[LOGGER_QUEUE_SIZE];
 	char socket_buffer[50];
 	float data;
 
@@ -62,7 +62,7 @@ void light_timer_handler(union sigval val)
 		BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] LUX = %f", data);
 	}
 
-	mq_send(logger_queue,buffer,256,0);
+	mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 
 	write(fd,"L",1);
 
