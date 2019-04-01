@@ -5,6 +5,7 @@
 #include "socket_task.h"
 #include "logger_task.h"
 #include "i2c_helper.h"
+#include "led.h"
 
 /* Posix timer variables */
 static timer_t main_timerid;
@@ -62,7 +63,7 @@ void main_thread_handler(union sigval val)
 	if(current.temp_count <= prev.temp_count)
 	{
 		LOG_PRINT("[MAIN TASK][ERROR] TEMPERATURE TASK DEAD\n");
-
+		TEMP_ERROR_LED_ON();
 		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] TEMPERATURE TASK DEAD");
 		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 		memset(buffer, 0, sizeof(buffer));
@@ -70,7 +71,7 @@ void main_thread_handler(union sigval val)
 	else
 	{
 		LOG_PRINT("[MAIN TASK]\t[DEBUG] TEMPERATURE TASK ALIVE\n");
-
+		TEMP_ERROR_LED_OFF();
 		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] TEMPERATURE TASK ALIVE");
 		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 		memset(buffer, 0, sizeof(buffer));
@@ -79,7 +80,7 @@ void main_thread_handler(union sigval val)
 	if(current.light_count <= prev.light_count)
 	{
 		LOG_PRINT("[MAIN TASK][ERROR] LIGHT TASK DEAD\n");
-
+		LIGHT_ERROR_LED_ON();
 		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] LIGHT TASK DEAD");
 		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 		memset(buffer, 0, sizeof(buffer));
@@ -87,7 +88,7 @@ void main_thread_handler(union sigval val)
 	else
 	{
 		LOG_PRINT("[MAIN TASK]\t[DEBUG] LIGHT TASK ALIVE\n");
-
+		LIGHT_ERROR_LED_OFF();
 		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] LIGHT TASK ALIVE");
 		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 		memset(buffer, 0, sizeof(buffer));		
@@ -96,7 +97,7 @@ void main_thread_handler(union sigval val)
 	if(current.logger_count <= prev.logger_count)
 	{
 		LOG_PRINT("[MIAN TASK][ERROR] LOGGER TASK DEAD\n");
-
+		LOGGER_ERROR_LED_ON();
 		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] LOGGER TASK DEAD");
 		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 		memset(buffer, 0, sizeof(buffer));
@@ -104,7 +105,7 @@ void main_thread_handler(union sigval val)
 	else
 	{
 		LOG_PRINT("[MAIN TASK]\t[DEBUG] LOGGER TASK ALIVE\n");
-
+		LOGGER_ERROR_LED_OFF();
 		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] LOGGER TASK ALIVE");
 		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 		memset(buffer, 0, sizeof(buffer));
@@ -113,7 +114,7 @@ void main_thread_handler(union sigval val)
 	if(current.socket_count <= prev.socket_count)
 	{
 		LOG_PRINT("[Main TASK][ERROR] SOCKET TASK DEAD\n");
-
+		SOCKET_ERROR_LED_ON();
 		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] SOCKET TASK DEAD");
 		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 		memset(buffer, 0, sizeof(buffer));
@@ -121,7 +122,7 @@ void main_thread_handler(union sigval val)
 	else
 	{
 		LOG_PRINT("[MAIN TASK]\t[DEBUG] SOCKET TASK ALIVE\n");
-
+		SOCKET_ERROR_LED_OFF();
 		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] SOCKET TASK ALIVE");
 		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 		memset(buffer, 0, sizeof(buffer));	
