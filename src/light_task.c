@@ -1,6 +1,7 @@
 #include "main_task.h"
 #include "light_task.h"
 #include "light_sensor.h"
+#include "led.h"
 
 char *proj3 = "/tmp/proj1";
 extern int SOCKET;
@@ -51,9 +52,11 @@ void light_timer_handler(union sigval val)
 	if (data == -1) {
 		//sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight Sensor Down\n",syscall(SYS_gettid));
 		BUILD_MESSAGE(buffer, "[LIGHT TASK] [ERROR] Light sensor down");
+		LIGHT_ERROR_LED_ON();
 	} else {
 		//sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight = %f\n",syscall(SYS_gettid), data);
 		BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] LUX = %f", data);
+		LIGHT_ERROR_LED_OFF();
 	}
 
 	mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
@@ -73,11 +76,40 @@ void light_timer_handler(union sigval val)
 	
 }
 
+int BIST_light()
+{
+	int status = i2c_open();
+
+    if (status != 0) {
+        printf("Failed to open I2C Bus\n");
+        return status;
+    }
+
+    if ((sensor_enable()) != MRAA_SUCCESS) {
+
+        printf("Failed to enable the sensor\n");
+        return status;
+    }
+
+    return status;
+}
+
 void *light_thread_handler()
 {
 	
-	char light_buffer[50];
-	char light_info[]="Taking Light Reading......\n";
+	char light_buffer[LOGGER_QUEUE_SIZE];
+	char light_info[]= "Taking Light Reading......\n";
+
+	if (BIST_light() != 0) {
+		printf("BIST for light sensor failed due to Sensor inactive");
+		LIGHT_ERROR_LED_ON();
+		BUILD_MESSAGE(light_buffer, "[LIGHT TASK] [ERROR] BIST for light sensor failed due to Sensor inactive");
+
+		goto exit;
+	} else {
+		BUILD_MESSAGE(light_buffer, "[LIGHT TASK] [DEBUG] BIST for light sensor passed");
+		LIGHT_ERROR_LED_OFF();
+	}
 
 	struct sigevent sev;
 	struct timespec mainTimeSpec;
@@ -123,20 +155,10 @@ void *light_thread_handler()
 	 // pid_t light_tid = getpid();	//Get thread id
 	 // printf("LIGHT TID:%d\n",light_tid);
 
-	 int status = i2c_open();
+	 
 
-    if (status != 0) {
-        printf("Failed to open I2C Bus\n");
-        //return -1;
-    }
-
-    if ((sensor_enable()) != MRAA_SUCCESS) {
-
-        printf("Failed to enable the sensor\n");
-        //return -1;
-    }
-
-
+	exit:
+		pthread_cancel(light_thread);
 
 	//pthread_cancel(pthread_self());
 	//timer_delete(light_timerid);
