@@ -1,4 +1,18 @@
-/* Standard C Library Headers */
+/*@Filename	: main_task.c
+ * @Author	: Om Raheja & Sorabh Gandhi
+ * @Course	: [PROJECT 1]Advanced Embedded Software Development Spring 2019
+ * @Date	: 31st March 2019
+ * @References	: https://www.softprayog.in/programming/interprocess-communication-using-posix-message-queues-in-linux
+ * @brief	: Creates all the threads(light,temperature,socket,logger) and checks if all the threads are alive/dead.
+ * 		  If this thread is terminates, it terminates the program after releasing all the resources,
+ * 		  closing the I2C bus, Closing the message queue and unlinking it. This task is also responsible
+ * 		  for logging the status of all other threads (alive/dead) to the log file.
+ * */
+
+
+/******************************
+ * USER DEFINED HEADER FILES  *
+ * ****************************/
 #include "main_task.h"
 #include "temp_task.h"
 #include "light_task.h"
@@ -7,8 +21,12 @@
 #include "i2c_helper.h"
 #include "led.h"
 
-/* Posix timer variables */
+
+/******************************
+ * POSIX TIMER VARIABLES      *
+ * ****************************/
 static timer_t main_timerid;
+
 
 /* Thread Alive/Dead Counter check structure */
 typedef struct{
@@ -18,30 +36,45 @@ typedef struct{
 	int socket_count;
 }thread_status_tracker_t;
 
-/* Create structure instances */
+
+/******************************
+ * STRUCTURE INSTANCES	      *
+ * ****************************/
 thread_status_tracker_t current = {0};
 thread_status_tracker_t prev = {0};
 
 
+/******************************
+ * NAMED PIPE FILE PATH       *
+ * ****************************/
 char *proj1 = "/tmp/proj1";
 
-/* Function Prototypes */
+
+/******************************
+ * FUNCTION PROTOTYPES *
+ * ****************************/
 void main_thread_handler();
 void main_signal_handler(int signo, siginfo_t *info,void *extra);
 void set_main_signal_handler(void);
 
+
+/********************************
+ * SIGNAL HANDLER FOR MAIN TASK *
+ * ******************************/
 void main_signal_handler(int signo, siginfo_t *info,void *extra)
 {
 	printf("\nKilling MAIN THREAD\n");
-	i2c_close();				//close i2c bus
+	i2c_close();			//close i2c bus
 	timer_delete(main_timerid);	//delete timer
-
 	mq_close(logger_queue);		//close logger queue
 	mq_unlink(QUEUE_NAME);		//unlink logger queue
 	exit(0);
 }
 
 
+/************************************
+ * SET SIGNAL HANDLER FOR MAIN TASK *
+ * * ********************************/
 void set_main_signal_handler(void)
 {
 	struct sigaction action;
@@ -55,7 +88,10 @@ void set_main_signal_handler(void)
 	}
 }
 
-/* Main Thread Handler */
+
+/******************************
+ * MAIN THREAD HANDLER        *
+ * ****************************/
 void main_thread_handler(union sigval val)
 {
 	char buffer[LOGGER_QUEUE_SIZE];
@@ -137,7 +173,9 @@ void main_thread_handler(union sigval val)
 
 
 
-/* Main Thread */
+/******************************
+ * MAIN THREAD	              *
+ * ****************************/
 int main(int argc, char *argv[])
 {
 	/*check for appropriate commandline arguments*/
@@ -146,7 +184,6 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	//printf("Initiating the Project!\n");
 	LOG_PRINT("[MAIN TASK]\t [DEBUG] Initiating the project\n");	
 
 	char buffer[LOGGER_QUEUE_SIZE];
@@ -157,7 +194,6 @@ int main(int argc, char *argv[])
 	/* Mutex Initialization */
 	if(pthread_mutex_init(&lock, NULL) !=0)
 	{
-		//printf("Mutex Initialization Failed!\n");
 		LOG_PRINT("[MAIN TASK]\t [ERROR] Mutex Initialization Failed\n");
 		exit(0);
 	}
@@ -188,7 +224,7 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-
+	/* Set signal handlers for all threads/tasks (light,logger,temperature,socket,main) */
 	set_light_signal_handler();
 	set_logger_signal_handler();
 	set_temp_signal_handler();
@@ -209,8 +245,7 @@ int main(int argc, char *argv[])
 		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
 	}
 
-	// int fd = open(proj1,O_RDONLY); 
-
+	/* Character to store heartbeat message from each task */
 	char heartbeat[1];
 
 	ssize_t read_status;
@@ -224,89 +259,84 @@ int main(int argc, char *argv[])
 	memset(&main_trigger,0,sizeof(struct itimerspec));
 
 	/* 
-     * Set the notification method as SIGEV_THREAD:
-     *
-     * Upon timer expiration, `sigev_notify_function` (thread_handler()),
-     * will be invoked as if it were the start function of a new thread.
-     *
-     */
-    main_sev.sigev_notify = SIGEV_THREAD;
-    main_sev.sigev_notify_function = &main_thread_handler;
+     	 * Set the notification method as SIGEV_THREAD:
+     	 *
+     	 * Upon timer expiration, `sigev_notify_function` (thread_handler()),
+     	 * will be invoked as if it were the start function of a new thread.
+     	 *
+     	 */
+    	main_sev.sigev_notify = SIGEV_THREAD;
+    	main_sev.sigev_notify_function = &main_thread_handler;
 	main_sev.sigev_value.sival_ptr = &main_timerid;
 
-	 /*
-    * Create the timer. In this example, CLOCK_REALTIME is used as the
-    * clock, meaning that we're using a system-wide real-time clock for 
-    * this timer.
-    */
+	/*
+    	 * Create the timer. In this example, CLOCK_REALTIME is used as the
+    	 * clock, meaning that we're using a system-wide real-time clock for 
+    	 * this timer.
+    	 */
 	timer_create(CLOCK_REALTIME, &main_sev, &main_timerid);
 
 	/* Timer expiration will occur withing 2 seconds after being armed
-     * by timer_settime(). Then the interval timer will takeover 
-     */
-    main_trigger.it_value.tv_sec = 5;
+     	 * by timer_settime(). Then the interval timer will takeover 
+     	 */
+    	main_trigger.it_value.tv_sec = 5;
 
 	/* Uncomment the following line to set the interval timer and
 	 * and see the threadhandler() execute periodically.
 	 */
-    main_trigger.it_interval.tv_sec = 5;
+    	main_trigger.it_interval.tv_sec = 5;
 
-    timer_settime(main_timerid,0,&main_trigger,NULL);
+    	timer_settime(main_timerid,0,&main_trigger,NULL);
 
 
 	while(1)
 	{
-		
+		/* Open Named pipe for read only operation */	
 		int fd = open(proj1,O_RDONLY); 
 
+		/* Clear Heartbeat buffer */
 		memset(heartbeat,0,1);
 
+		/* Read the data(heartbeat) from respective threads */
 		read(fd,heartbeat,1);
 
+		/* Check heartbeat received from each thread */
 		if(!strcmp(heartbeat,"L"))
 		{
-			//printf("Hearbeat from LIGHT\n");
 			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'LIGHT TASK'\n");
 			(current.light_count)++;
-			//printf("Light_check = %d\n",current.light_count);
 			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'LIGHT TASK' = %d\n", current.light_count);
 		}
 
 		if(!strcmp(heartbeat,"T"))
 		{
-			//printf("Hearbeat from TEMPERATURE\n");
 			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'TEMPERATURE TASK'\n");
 			(current.temp_count)++;
-			//printf("Temp_check = %d\n",current.temp_count);
 			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'TEMPERATURE TASK' = %d\n", current.temp_count);
 		}
 
 		if(!strcmp(heartbeat,"O"))
 		{
-			//printf("Hearbeat from LOGGER\n");
 			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'LOGGER TASK'\n");
 			(current.logger_count)++;
-			//printf("Logger_check = %d\n",current.logger_count);
 			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'LOGGER TASK' = %d\n", current.logger_count);
 		}
 
 		if(!strcmp(heartbeat,"S"))
 		{
-			//printf("Hearbeat from SOCKET\n");
 			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'SOCKET TASK'\n");
 			(current.socket_count)++;
-			//printf("Socket_check = %d\n",current.socket_count);
 			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'SOCKET TASK' = %d\n", current.socket_count);
 		}
-		//close(fd);
-		//printf("%s\n",heartbeat);
 	}
 
+	/* Wait for child threads to terminate */
 	pthread_join(light_thread,NULL);
 	pthread_join(temp_thread,NULL);
 	pthread_join(logger_thread,NULL);
 	pthread_join(socket_thread,NULL);
 
+	/* Destroys the mutex object */
 	pthread_mutex_destroy(&lock);
 
 	return 0;
