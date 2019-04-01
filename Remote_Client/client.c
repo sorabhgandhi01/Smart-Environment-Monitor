@@ -1,11 +1,19 @@
-/*  @Author		: Om Raheja & Sorabh Gandhi
-	@Filename	: client.c
-	@Course 	: Advanced Embedded Software Development Spring 2019
-	@References	: https://www.youtube.com/watch?v=pFLQmnmDOo
-				: https://gist.github.com/sevko/d23646ba07c77c15fde9
-*/
+/*@Filename	: client.c
+ * @Author	: Om Raheja & Sorabh Gandhi
+ * @Course	: [PROJECT 1]Advanced Embedded Software Development Spring 2019
+ * @Date	: 31st March 2019
+ * @References	: https://www.youtube.com/watch?v=pFLQmnmDOo
+ *		: https://gist.github.com/sevko/d23646ba07c77c15fde9
+ * @brief	: Connects to the Smart environment monitoring system via a
+ * 		  server-client architecture. Client can ask the system for
+ * 		  Temperature/Lux data. Client then receives and displays
+ * 		  the received data.
+ * */
 
-/*Standard C Library Headers*/
+
+/******************************
+ * STANDARD C LIBRARY HEADERS *
+ * ****************************/
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -18,21 +26,22 @@
 #include <sys/time.h>
 #include <signal.h>
 
-extern int SOCKET_FLAG=0;
-int sock;
-int flag=0;
 
+/******************************
+ * GLOBAL VARIABLES           *
+ * ****************************/
+int sock;
+
+
+/******************************
+ * MAIN FUNCTION              *
+ * ****************************/
 int main(int argc,char *argv[])
 {
-
-	//int sock;
-	int ret_val;
-	struct sockaddr_in server;
-	char msgbuffer[1024];
-
-
-	sock = socket(AF_INET, SOCK_STREAM, 0); //create socket
-
+	struct sockaddr_in client;
+	
+	/* Create Socket */
+	sock = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(sock < 0)
 	{
@@ -40,13 +49,13 @@ int main(int argc,char *argv[])
 		exit(1);
 	}
 
+	/* Populate client structure with IP address and port number */
+	client.sin_family = AF_INET;
+	client.sin_port = htons(9000);
+	client.sin_addr.s_addr = inet_addr("10.0.0.52");
 
-	server.sin_family = AF_INET;
-	server.sin_port = htons(9000);
-	server.sin_addr.s_addr = inet_addr("10.0.0.52");
-
-
-	if(connect(sock,(struct sockaddr *)&server,sizeof(server)) < 0)
+	
+	if(connect(sock,(struct sockaddr *)&client,sizeof(client)) < 0)
 	{
 		perror("Connection Failed");
 		close(sock);
@@ -60,63 +69,29 @@ int main(int argc,char *argv[])
 
 	while(1)
 	{
-		
+		/* Clear the data buffers */
 		memset(str,0,sizeof(str));
 		memset(string,0,sizeof(string));
-		printf("Enter the data you want to retrieve!\n");
+
+		/* Menu for obtaining data from the system */
+		printf("Press Serial Number to obtain respective Data from the System\n");
 		printf("1)Get Temp in Celcius.\n");
 		printf("2)Get Temp in Farhenite.\n");
 		printf("3)Get Temp in Kelvin.\n");
 		printf("4)Get Lux value.\n");
 
 		scanf("%s",&str);
+		
+		/* Send selected option to system */
+		send(sock,str,20,0);
 
-		//SOCKET_FLAG =1;
-		send(sock,str,20,0);	
+		/* Receive and print the received data */
 		recv(sock,string,50,0);
 		printf("In Client: %s\n",string);
 }
-
-/*
-	while(1)
-	{
-
-		for(int i=0;i<10;i++)
-		{
-			client.string = array_for_client[i];
-			int a =send(sock,client.string,strlen(client.string),0);
-			fileptr=fopen("om.txt","a");
-			fprintf(fileptr,"Timestamp :%ld\n",getMicrotime());
-			fprintf(fileptr,"Message Length = %d\n",a);
-			fclose(fileptr);
-
-
-			memset(msgbuffer,0,sizeof(msgbuffer));
-			if((ret_val = recv(sock,msgbuffer,7,0) < 0) && (flag == 0))
-			{
-				perror("Reading stream message error");
-			}
-			else if(ret_val == 0)
-			{
-				//printf("Ending Connection\n");
-			}
-			else
-			{
-				fileptr=fopen("om.txt","a");
-				fprintf(fileptr,"Timestamp :%ld\n",getMicrotime());
-				fprintf(fileptr,"Message : %s\n",msgbuffer);
-				fclose(fileptr);
-			}
-
-			fileptr=fopen("om.txt","a");
-			fprintf(fileptr,"Timestamp :%ld\n",getMicrotime());
-			fprintf(fileptr,"Message in Client = %s\n",msgbuffer);
-			fclose(fileptr);
-			sleep(1);
-
-		}
-	}
-	*/
+	/* Close the socket */
 	close(sock);
 	return 0;
 }
+
+/* EOF */
