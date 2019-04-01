@@ -103,6 +103,13 @@ void *logger_thread_handler(void *arg)
 
     timer_settime(logger_timerid, 0, &logger_trigger, NULL);
 
+    fptr = fopen(file_name, "r+");
+
+    if (fptr) {
+    	fclose(fptr);
+    	remove(file_name);
+    }
+
 
     while(1)
     {
