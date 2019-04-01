@@ -1,5 +1,8 @@
 #include "main_task.h"
 #include "logger_task.h"
+#include "temp_task.h"
+#include "light_task.h"
+#include "socket_task.h"
 
 char *proj5 = "/tmp/proj1";
 
@@ -8,13 +11,10 @@ char *proj5 = "/tmp/proj1";
 void logger_signal_handler(int signo, siginfo_t *info,void *extra)
 {
 	printf("\nKilling LOGGER THREAD\n");
+	
 	timer_delete(logger_timerid);
 	pthread_cancel(logger_thread);
-	
-	
-	// fclose(fptr);
-	// mq_close(logger_queue);
-	// mq_unlink(QUEUE_NAME);
+	kill(getpid(),SIGKILL);
 	
 }
 
