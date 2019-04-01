@@ -5,6 +5,8 @@
 
 char *proj3 = "/tmp/proj1";
 extern int SOCKET;
+int dark = 1;
+int prev_state = -1;
 
 void light_signal_handler(int signo, siginfo_t *info,void *extra)
 {
@@ -55,8 +57,27 @@ void light_timer_handler(union sigval val)
 		LIGHT_ERROR_LED_ON();
 	} else {
 		//sprintf(buffer,"LIGHT THREAD DATA\tTID:%ld\tLight = %f\n",syscall(SYS_gettid), data);
-		BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] LUX = %f", data);
+		
 		LIGHT_ERROR_LED_OFF();
+
+		if (data < 50) {
+			dark = 0;
+		} else {
+			dark = 1;
+		}
+
+		if (dark != prev_state) {
+			if (dark) {
+				BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] Lux = %f CURRENT STATE = LIGHT", data);
+			} else {
+				BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] Lux = %f CURRENT STATE = DARK", data);
+			}
+
+			prev_state = dark;
+		} else {
+			BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] LUX = %f", data);
+		}
+
 	}
 
 	mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
