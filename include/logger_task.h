@@ -26,4 +26,9 @@ void *logger_thread_handler();
 /* Function Prototype (posix timer handler) */
 void logger_timer_handler(union sigval val);
 
+
+/* Function Prototype (Signal Handler) */
+void set_logger_signal_handler(void);
+void logger_signal_handler(int signo, siginfo_t *info,void *extra);
+
 #endif

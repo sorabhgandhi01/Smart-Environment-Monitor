@@ -12,6 +12,33 @@ int mysock;
 int flag=0;
 extern int SOCKET;
 
+
+void socket_signal_handler(int signo, siginfo_t *info,void *extra)
+{
+	printf("\nKilling SOCKET THREAD\n");
+	timer_delete(socket_timerid);	//delete timer	
+	mq_close(socket_queue);			//close message queue
+	mq_unlink(SOCKET_QUEUE_NAME);	//unlink queue
+	close(sock);					//close socket
+	pthread_cancel(socket_thread);	//kill thread
+
+}
+
+
+void set_socket_signal_handler(void)
+{
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = socket_signal_handler;
+
+	if(sigaction(SIGTERM,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+}
+
+
 /* Socket Timer Handler */
 void socket_timer_handler(union sigval val)
 {
