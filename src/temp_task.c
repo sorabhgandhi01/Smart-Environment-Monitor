@@ -89,7 +89,7 @@ int BIST_temp()
 
     if (status != 0) {
         printf("Failed to open I2C Bus\n");
-        return status;
+        return -1;
     }
 
     return status;
@@ -101,14 +101,17 @@ void *temp_thread_handler()
 	char temp_buffer[LOGGER_QUEUE_SIZE];
 	char temp_info[]="Taking Temperature Reading......\n";
 
-	if (BIST_temp() != 0) {
+	if (BIST_temp() == -1) {
 		printf("BIST for temperature sensor failed due to Sensor inactive");
 		TEMP_ERROR_LED_ON();
 		BUILD_MESSAGE(temp_buffer, "[TEMPERATURE TASK] [ERROR] BIST for temperature sensor failed due to Sensor inactive");
 
-		goto exit;
+		mq_send(logger_queue, temp_buffer, LOGGER_QUEUE_SIZE, 0);
+
+		pthread_cancel(temp_thread);
 	} else {
 		BUILD_MESSAGE(temp_buffer, "[TEMPERATURE TASK] [DEBUG] BIST for temperature sensor passed");
+		mq_send(logger_queue, temp_buffer, LOGGER_QUEUE_SIZE, 0);
 		TEMP_ERROR_LED_OFF();
 	}
 
@@ -149,7 +152,6 @@ void *temp_thread_handler()
 
     timer_settime(temp_timerid, 0, &temp_trigger, NULL);
 
-    exit:
-    	pthread_cancel(temp_thread);
+    
 
 }
