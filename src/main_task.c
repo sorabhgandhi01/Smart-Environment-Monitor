@@ -149,6 +149,8 @@ int main(int argc, char *argv[])
 	//printf("Initiating the Project!\n");
 	LOG_PRINT("[MAIN TASK]\t [DEBUG] Initiating the project\n");	
 
+	char buffer[LOGGER_QUEUE_SIZE];
+
 	/* Create Named Pipe */
 	mkfifo(proj1, QUEUE_PERMISSIONS); //heartbeat signals
 
@@ -194,16 +196,18 @@ int main(int argc, char *argv[])
 	set_main_signal_handler();
 
 	/* Create Logger Thread */
-	pthread_create(&logger_thread,NULL,logger_thread_handler,(void *)argv[1]);
+	if ((pthread_create(&logger_thread,NULL,logger_thread_handler,(void *)argv[1]) || \
+		pthread_create(&light_thread,NULL,light_thread_handler,(void *)NULL) || \
+		pthread_create(&temp_thread,NULL,temp_thread_handler,(void *)NULL) || \
+		pthread_create(&socket_thread,NULL,socket_thread_handler,(void *)NULL)) == 0) {
 
-	/* Create Light Thread */
-	pthread_create(&light_thread,NULL,light_thread_handler,(void *)NULL);
-
-	/* Create Temperature Thread */
-	pthread_create(&temp_thread,NULL,temp_thread_handler,(void *)NULL);
-
-	/* Create Socket Thread */
-	pthread_create(&socket_thread,NULL,socket_thread_handler,(void *)NULL);
+		BUILD_MESSAGE(buffer, "[MAIN TASK][INFO] BIST for THREAD CREATION PASSED");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+	}
+	else {
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] BIST for THREAD CREATION FAILED");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+	}
 
 	// int fd = open(proj1,O_RDONLY); 
 

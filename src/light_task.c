@@ -82,13 +82,14 @@ int BIST_light()
 
     if (status != 0) {
         printf("Failed to open I2C Bus\n");
-        return status;
+        return -1;
     }
 
-    if ((sensor_enable()) != MRAA_SUCCESS) {
+    status = sensor_enable();
+    if (status != MRAA_SUCCESS) {
 
         printf("Failed to enable the sensor\n");
-        return status;
+        return -1;
     }
 
     return status;
@@ -100,16 +101,22 @@ void *light_thread_handler()
 	char light_buffer[LOGGER_QUEUE_SIZE];
 	char light_info[]= "Taking Light Reading......\n";
 
-	if (BIST_light() != 0) {
+	if (BIST_light() == -1) {
 		printf("BIST for light sensor failed due to Sensor inactive");
 		LIGHT_ERROR_LED_ON();
 		BUILD_MESSAGE(light_buffer, "[LIGHT TASK] [ERROR] BIST for light sensor failed due to Sensor inactive");
 
-		goto exit;
+		mq_send(logger_queue, light_buffer, LOGGER_QUEUE_SIZE, 0);
+
+		pthread_cancel(light_thread);
 	} else {
 		BUILD_MESSAGE(light_buffer, "[LIGHT TASK] [DEBUG] BIST for light sensor passed");
+		mq_send(logger_queue, light_buffer, LOGGER_QUEUE_SIZE, 0);
+
 		LIGHT_ERROR_LED_OFF();
 	}
+
+	mq_send(logger_queue, light_buffer, LOGGER_QUEUE_SIZE, 0);
 
 	struct sigevent sev;
 	struct timespec mainTimeSpec;
@@ -157,8 +164,7 @@ void *light_thread_handler()
 
 	 
 
-	exit:
-		pthread_cancel(light_thread);
+
 
 	//pthread_cancel(pthread_self());
 	//timer_delete(light_timerid);
