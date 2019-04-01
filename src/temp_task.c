@@ -100,6 +100,8 @@ void temp_timer_handler(union sigval val)
 int BIST_temp()
 {
 	int status;
+	uint16_t t_high = 29;
+	uint16_t t_low = 26;
 
     status = i2c_open();
 
@@ -107,6 +109,10 @@ int BIST_temp()
         printf("Failed to open I2C Bus\n");
         return -1;
     }
+
+    write_tlow_reg(t_low);
+
+	write_thigh_reg(t_high);
 
     return status;
 }
