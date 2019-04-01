@@ -1,0 +1,3006 @@
+ #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include <mqueue.h>
+#include <stdarg.h>
+#include <time.h>
+
+#include <assert.h>
+
+#include "logger_task.h"
+
+int main()
+{
+	FILE *fptr;
+	char str[20];
+
+	fptr = fopen("test.txt", "a");
+	LOG_TO_FILE(fptr, "This is a test\n");
+	fclose(fptr);
+
+	fptr = fopen("test.txt", "r+");
+	fgets(str, 20, fptr);
+	fclose(fptr);
+
+	int status = strcmp(str, "This is a test\n");
+	assert(status == 0);
+
+	return 0;
+}
+#include "light_sensor.h"
+#include "i2c_helper.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <math.h>
+#include <errno.h>
+#include <assert.h>
+
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+void signal_handler(int signum)
+{
+    sensor_disable();
+    i2c_close();
+}
+
+
+int main()
+{
+    signal(SIGINT, signal_handler);
+    float data;
+    int status;
+    uint8_t id;
+    uint8_t time_data;
+
+    status = i2c_open();
+    assert(status == 0);
+
+    status = sensor_enable();
+    assert(status == 0);
+
+    read_sensorID(&id);
+    assert(id == 0x50);
+
+    uint16_t read = 0;
+    uint16_t write = 0x12;
+    status = write_int_tlow(write);
+    assert(status == 0);
+
+    status = read_int_tlow(&read);
+    printf("Read tlow = %x\n", read);
+
+    write = 0x34;
+    status = write_int_thigh(write);
+    assert(status == 0);
+
+    status = read_int_thigh(&read);
+    printf("Read thigh = %x\n", read);
+
+#if 0
+    status = set_manualControl(1);
+    assert(status == 0);
+
+    read_timer_reg(&time_data);
+    assert(time_data == 11);
+
+    status = set_integrationTime(0);
+    assert(status == 0);
+
+    read_timer_reg(&time_data);
+    assert(time_data == 8);
+
+    status = set_integrationTime(1);
+    assert(status == 0);
+
+    read_timer_reg(&time_data);
+    assert(time_data == 9);
+
+    status = set_integrationTime(2);
+    assert(status == 0);
+
+    read_timer_reg(&time_data);
+    assert(time_data == 10);
+
+    status = set_integrationTime(3);
+    assert(status == 0);
+
+    read_timer_reg(&time_data);
+    assert(time_data == 11);
+
+    status = set_manualControl(0);
+    assert(status == 0);
+
+    read_timer_reg(&time_data);
+    assert(time_data == 3);
+#endif
+
+    status = sensor_disable();
+    assert(status == 0);
+
+    status = i2c_close();
+    assert(status == 0);
+
+    return 0;
+}
+#include <unistd.h>
+#include <stdint.h>
+#include "temperature_sensor.h"
+
+#include <assert.h>
+
+int main()
+{
+	int status;
+	uint16_t write_data = 0;
+	uint16_t read_data = 0;
+
+	status = i2c_open();
+	assert(status == 0);
+
+	write_data = 75;
+	status = write_tlow_reg(write_data);
+	assert(status == 0);
+
+	status = read_tlow_reg(&read_data);
+	assert(status == 0);
+	assert(write_data == read_data);
+
+	write_data = 80;
+	status = write_thigh_reg(write_data);
+	assert(status == 0);
+
+	status = read_thigh_reg(&read_data);
+	assert(status == 0);
+	assert(write_data == read_data);
+
+	status = set_extendedMode();
+	assert(status == 0);
+
+	status = read_configuration_reg(&read_data);
+	assert(status == 0);
+	assert(read_data == 0xb063);
+	//printf("Read data after set EM mode = %x\n", read_data);
+
+	status = set_sdMode();
+	assert(status == 0);
+
+	status = read_configuration_reg(&read_data);
+	assert(status == 0);
+	assert(read_data == 0xb063);
+	//printf("Read data after set SD mode = %x\n", read_data);
+
+	status = set_comparatorMode();
+	assert(status == 0);
+
+	status = read_configuration_reg(&read_data);
+	assert(status == 0);
+	assert(read_data == 0xb061);
+	//printf("Read data after set CM mode = %x\n", read_data);
+
+	status = set_InterruptMode();
+	assert(status == 0);
+
+	status = read_configuration_reg(&read_data);
+	assert(status == 0);
+	assert(read_data == 0xb063);
+	//printf("Read data after set IM mode = %x\n", read_data);
+
+	status = set_defaultMode();
+	assert(status == 0);
+
+	status = read_configuration_reg(&read_data);
+	assert(status == 0);
+	assert(read_data == 0xa063);
+	//printf("Read data after set DM mode = %x\n", read_data);
+
+	status = set_operationFreq(0);
+	assert(status == 0);
+
+	status = read_configuration_reg(&read_data);
+	assert(status == 0);
+	assert(read_data == 0x6063);
+	//printf("Read data after set 0.25Hz = %x\n", read_data);
+
+	status = set_operationFreq(1);
+	assert(status == 0);
+
+	status = read_configuration_reg(&read_data);
+	assert(status == 0);
+	assert(read_data == 0x6063);
+	//printf("Read data after set 1Hz = %x\n", read_data);
+
+	status = set_operationFreq(2);
+	assert(status == 0);
+
+	status = read_configuration_reg(&read_data);
+	assert(status == 0);
+	assert(read_data == 0xa063);
+	//printf("Read data after set 4Hz = %x\n", read_data);
+
+	status = set_operationFreq(3);
+	assert(status == 0);
+
+	status = read_configuration_reg(&read_data);
+	assert(status == 0);
+	assert(read_data == 0xe063);
+	//printf("Read data after set 8Hz = %x\n", read_data);
+
+	status = set_operationFreq(2);
+	assert(status == 0);
+
+	status = set_defaultMode();
+	assert(status == 0);
+
+	status = i2c_close();
+	assert(status == 0);
+
+	return 0;
+}/*@filename     : main_task.h
+ * @author      : Om Raheja & Sorabh Gandhi
+ * @brief       : Contains all the function prototypes realted to temperature task
+ * @date        : 31st March 2019
+ * */
+
+#ifndef MAIN_TASK_H
+#define MAIN_TASK_H
+
+/* Standard C Library Headers */
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include <mqueue.h>
+#include <stdarg.h>
+#include <time.h>
+
+#define BUILD_MESSAGE(buffer, format, ...) \
+do{ \
+sprintf(buffer, "[PID:%d][TID:%ld][Timestamp = %lu]\t" format, getpid(), syscall(SYS_gettid), time(NULL), ##__VA_ARGS__); \
+}while(0)
+
+#define LOG_PRINT(format, ...) \
+do{ \
+	printf("[PID:%d][TID:%ld]", getpid(), syscall(SYS_gettid)); \
+	printf(format, ##__VA_ARGS__); \
+	fflush(stdout); \
+}while(0)
+
+#define LOGGER_QUEUE_SIZE (256)
+
+/* Macros */
+#define QUEUE_NAME					"/my_queue"
+#define SOCKET_QUEUE_NAME			"/my_queue_2"
+#define SIZE_OF_QUEUE		10
+#define QUEUE_PERMISSIONS	0666
+
+/* Log File Pointer */
+FILE *fptr;
+
+
+
+/* Mutex lock declaration */
+pthread_mutex_t lock;
+
+/* Global variables for queue */
+mqd_t logger_queue;
+struct mq_attr queue_attr;
+
+mqd_t socket_queue;
+struct mq_attr socket_queue_attr;
+
+
+/* Buffer for storing queue data */
+char buffer[50];
+
+#endif
+/*@filename     : light_task.h
+ * @author      : Om Raheja & Sorabh Gandhi
+ * @brief       : Contains all the function prototypes realted to light task
+ * @date        : 31st March 2019
+ * */
+
+#ifndef LIGHT_TASK_H
+#define LIGHT_TASK_H
+
+
+/******************************
+ * PTHREAD VARIABLES          *
+ * ****************************/
+pthread_t light_thread;
+
+/******************************
+ * POSIX TIMER VARIABLES      *
+ * ****************************/
+static timer_t light_timerid;
+
+
+/******************************
+ * THREAD IDs                 *
+ * ****************************/
+pid_t light_tid;
+
+
+/*****************************************
+ * FUNCTION PROTOTYPE FOR THREAD HANDLER *
+ * ***************************************/
+/********************************************
+ * LIGHT THREAD HANDLER                     *
+ * ******************************************/
+/*@brief: The light thread handler triggers the light timer handler every
+ *        2 seconds. It also initializes the light sensor.
+ *
+ *@param: void
+ *
+ *@return: No Return value
+ * */
+void *light_thread_handler();
+
+
+/********************************************
+ * FUNCTION PROTOTYPE (POSIX TIMER HANDLER) *
+ * ******************************************/
+/********************************************
+ * LIGHT TIMER HANDLER                     *
+ * ******************************************/
+/*@brief: Gets called every 2 seconds. Measures the lux value and logs
+ * 	 it to the log file. If a remote client socket request comes in,
+ * 	 this function sends the most recent lux value to the Server via 
+ * 	 message queue. The server then sends the data to the client via 
+ * 	 socket. 
+ *
+ *@param: signal value
+ *
+ *@return: No Return value
+ * */
+void light_timer_handler(union sigval val);
+
+
+/********************************************
+ * FUNCTION PROTOTYPE (SIGNAL HANDLER)      *
+ * ******************************************/
+/********************************************
+ * SET LIGHT SIGNAL HANDLER                     *
+ * ******************************************/
+/*@brief: Sets the signal handler for light task/thread
+ *
+ *@param: void
+ *
+ *@return: No Return value
+ * */
+void set_light_signal_handler(void);
+
+
+
+/********************************************
+ * LIGHT SIGNAL HANDLER                     *
+ * ******************************************/
+/*@brief: On reception of a SIGUSR2 signal, this function will be invoked.
+ * 	  It deletes the light timer, kills the light threads and disables the
+ * 	  light sensor.
+ *
+ *@param: param1: signo
+	  param2: info string 
+ *	  param3: extra
+ *
+ *@return: No Return value
+ * */
+void light_signal_handler(int signo, siginfo_t *info,void *extra);
+
+#endif
+/*@filename     : socket_task.h
+ * @author      : Om Raheja & Sorabh Gandhi
+ * @brief       : Contains all the function prototypes realted to socket task
+ * @date        : 31st March 2019
+ * */
+
+#ifndef SOCKET_TASK_H
+#define SOCKET_TASK_H
+
+/******************************
+ * PTHREAD VARIABLES          *
+ * ****************************/
+pthread_t socket_thread;
+
+
+/******************************
+ * POSIX TIMER VARIABLES      *
+ * ****************************/
+static timer_t socket_timerid;
+
+
+/******************************
+ * THREAD IDs                 *
+ * ****************************/
+pid_t socket_tid;
+
+
+/*****************************************
+ * FUNCTION PROTOTYPE FOR THREAD HANDLER *
+ * ***************************************/
+/********************************************
+ * SOCKET THREAD HANDLER                     *
+ * ******************************************/
+/*@brief: The socket thread handler triggers the socket timer handler every
+ *        2 seconds. It waits for any remote client request that may come in
+ *        and sends the requested data to the client.
+ *
+ *@param: void
+ *
+ *@return: No Return value
+ * */
+void *socket_thread_handler();
+
+
+/********************************************
+ * FUNCTION PROTOTYPE (POSIX TIMER HANDLER) *
+ * ******************************************/
+/********************************************
+ * SOCKET TIMER HANDLER                     *
+ * ******************************************/
+/*@brief: Gets called every 2 seconds. Sends a heartbeat to the main task
+ * 	  to indicate that it is alive.
+ *
+ *@param: signal value
+ *
+ *@return: No Return value
+ * */
+void socket_timer_handler(union sigval val);
+
+
+
+/********************************************
+ * FUNCTION PROTOTYPE (SIGNAL HANDLER)      *
+ * ******************************************/
+/********************************************
+ * SET SOCKET SIGNAL HANDLER                *
+ * ******************************************/
+/*@brief: Sets the signal handler for socket task/thread
+ *
+ *@param: void
+ *
+ *@return: No Return value
+ * */
+void set_socket_signal_handler(void);
+
+
+/********************************************
+ * SOCKET SIGNAL HANDLER                     *
+ * ******************************************/
+/*@brief: On reception of a SIGTERM signal, this function will be invoked.
+ *        It deletes the socket timer, kills the socket threads,closes the
+ *        message queue and the socket.
+ *
+ *@param: param1: signo
+          param2: info string
+ *        param3: extra
+ *
+ *@return: No Return value
+ * */
+void socket_signal_handler(int signo, siginfo_t *info,void *extra);
+
+
+#endif
+/*@filename     : temperature_sensor.h
+ * @author      : Sorabh Gandhi & Om Raheja
+ * @brief       : Contains all the function prototypes realted to temperature sensor initialization
+ * @date        : 31st March 2019
+ * */
+
+
+
+#ifndef TEMPERATURE_SENSOR
+#define TEMPERATURE_SENSOR
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include "i2c_helper.h"
+
+#define TEMPERATURE_SENSOR_ADDR (0x48)
+
+#define TEMPERATURE_REG         (0x00)
+#define CONFIGURATION_REG       (0X01)
+#define TLOW_REG                (0X02)
+#define THIGH_REG               (0x03)
+
+#define EXTENDED_MODE_SET_BIT				(1<<12)
+#define THERMOSTAT_MODE_SET_BIT				(1<<1)
+#define SHUTDOWN_MODE_SET_BIT				(1)
+#define POLARITY_SET_BIT					(1<<2)
+
+/*****************************************
+ * FUNCTION PROTOTYPES                   *
+ * ***************************************/
+
+/********************************************
+ * WRITE TLOW REG                            *
+ * ******************************************/
+/*@brief: This function sets the lower order threshold.
+ *
+ *@param: temp (2 byte lower threshold data)
+ *
+ *@return: 0 on SUCCESS
+ 	 :-1 on FAILURE
+ * */
+
+int write_tlow_reg(uint16_t temp);
+
+
+/********************************************
+ * READ TLOW REG                            *
+ * ******************************************/
+/*@brief: This function reads the lower order threshold.
+ *
+ *@param: temp (2 byte lower threshold data)
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+
+int read_tlow_reg(uint16_t *temp);
+
+/********************************************
+ * WRITE THIGH REG                          *
+ * ******************************************/
+/*@brief: This function sets the higher order threshold.
+ *
+ *@param: temp (2 byte higher threshold data)
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+
+int write_thigh_reg(uint16_t temp);
+
+
+
+/********************************************
+ * READ THIGH REG                           *
+ * ******************************************/
+/*@brief: This function reads the higher order threshold.
+ *
+ *@param: temp (2 byte higher threshold data)
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+
+int read_thigh_reg(uint16_t *temp);
+
+
+
+/********************************************
+ * READ CONFIGURATION REG                   *
+ * ******************************************/
+/*@brief: This function reads the configuration register
+ *
+ *@param: *data (2 byte of data obtained from configuration register)
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+
+int read_configuration_reg(uint16_t *data);
+
+
+
+/********************************************
+ * SET ALERT                                *
+ * ******************************************/
+/*@brief: This function enables the alert functionality.
+ *
+ *@param: value 1 to enable alert
+ 		0 to disable alert
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+
+int set_alert(uint8_t value);
+
+
+/********************************************
+ * SET DEFAULT MODE                         *
+ * ******************************************/
+/*@brief: This function sets the slave device in the default mode.
+ *
+ *@param: void
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+
+int set_defaultMode();
+
+
+/********************************************
+ * SET EXTENDED MODE                         *
+ * ******************************************/
+/*@brief: This function sets the slave device in the EM mode.
+ *
+ *@param: void
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int set_extendedMode();
+
+
+/********************************************
+ * SET SD MODE                         *
+ * ******************************************/
+/*@brief: This function sets the slave device in the shutdown(low power) mode.
+ *
+ *@param: void
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int set_sdMode();
+
+
+/********************************************
+ * SET COMPARATOR MODE                      *
+ * ******************************************/
+/*@brief: This function sets the slave device in the comparator mode.
+ *
+ *@param: void
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int set_comparatorMode();
+
+
+/********************************************
+ * SET INTERRUPT MODE                       *
+ * ******************************************/
+/*@brief: This function sets the slave device in the interrupt mode.
+ *
+ *@param: void
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int set_InterruptMode();
+
+
+/********************************************
+ * SET OPERATION FREQ                       *
+ * ******************************************/
+/*@brief: This function sets the conversion rate of the slave device.
+ *
+ *@param: freq 0 to operate in 0.25Hz
+ 	       1 to operate in 1Hz
+	       2 to operate in 4Hz
+	       3 to operate in 8Hz
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int set_operationFreq(uint8_t freq);
+
+
+/********************************************
+ * READ ALERT BIT                           *
+ * ******************************************/
+/*@brief: This function reads the alert bit.
+ *
+ *@param: *value Obtains the alert bit
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int read_alertBit(uint8_t *value);
+
+/********************************************
+ * GET SENSOR TEMP                          *
+ * ******************************************/
+/*@brief: This function reads the temperature data from the temperature register.
+ *
+ *@param: *temp Obtains temperature in Celcius
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int get_sensortemp(float *temp);
+
+#endif
+#ifndef _LIGHT_SENSOR_H_
+#define _LIGHT_SENSOR_H_
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include "i2c_helper.h"
+
+#define LIGHT_SENSOR_ADDR (0x39)
+
+//Defining the register set of APDS-9301
+#define COMMAND_REG (0x80)            //Specifies register address
+#define CONTROL_REG (0x00)            //Control of basic functions
+#define TIMING_REG (0x01)             //Integration time/gain control
+#define THRESHLOWLOW_REG (0x02)       //Low byte of low interrupt threshold
+#define THRESHLOWHIGH_REG (0x03)      //High byte of low interrupt threshold
+#define THRESHHIGHLOW_REG (0x04)      //Low byte of high interrupt threshold
+#define THRESHHIGHHIGH_REG (0x05)     //High byte of high interrupt threshold
+#define INTERRUPT_REG (0x06)          //Interrupt control
+#define CRC_REG (0x08)                //Factory test — not a user register
+#define ID_REG (0x0A)                 //Part number/ Rev ID
+#define DATA0LOW_REG (0x0C)           //Low byte of ADC channel 0
+#define DATA0HIGH_REG (0x0D)          //High byte of ADC channel 0
+#define DATA1LOW_REG (0x0E)           //Low byte of ADC channel 1
+#define DATA1HIGH_REG (0x0F)          //High byte of ADC channel 1
+
+#define POWER_ON_BIT (0x03)
+#define POWER_OFF_BIT (0x00)
+#define WORD_SET_BIT (1<<5)
+#define MANUAL_CONTROL_ENABLE_BIT(x) (x<<3)
+#define INTG_TIME_SET_BIT (0x03)
+#define CLEAR_PENDING_INT_BIT (1<<6)
+
+//Write to Control register
+int write_int_tlow(uint16_t tlow);
+
+int read_int_tlow(uint16_t *tlow);
+
+int write_int_thigh(uint16_t thigh);
+
+int read_int_thigh(uint16_t *thigh);
+
+int sensor_enable();
+
+int sensor_disable();
+
+int read_sensorID(uint8_t *id);
+
+int read_timer_reg(uint8_t *data);
+
+int enable_interrupt(uint8_t set);
+
+int clear_pendingInterrupt();
+
+int set_integrationTime(uint8_t value);
+
+int set_manualControl(uint8_t on);
+
+int read_channel0(uint16_t *data);
+
+int read_channel1(uint16_t *data);
+
+float get_sensorlux();
+
+#endif/*@filename     : led.h
+ * @author      : Om Raheja & Sorabh Gandhi
+ * @brief       : contains macros for led on, led off, gpio path, gpio direction for all threads/tasks 
+ * @date        : 31st March 2019
+ * */
+
+#ifndef LED_H
+#define LED_H
+
+/*******************************
+ * STANDARD C LIBRARAY HEADERS**
+ * *****************************/
+#include <unistd.h>
+#include <stdio.h> 
+
+/******************************
+ * MACROS & DEFINITIONS       *
+ * ****************************/
+#define OFF "0"
+#define ON  "1"
+#define IO_DIRECTION  "out"
+
+#define TEMP_SENSOR   "53"
+#define LIGHT_SENSOR  "54"
+#define SOCKET_THREAD "55"
+#define LOGGER_THREAD "56"
+
+#define TEMP_GPIO_PATH "/sys/class/gpio/gpio53/value"
+#define TEMP_GPIO_DIRECTION "/sys/class/gpio/gpio53/direction"
+
+#define LIGHT_GPIO_PATH "/sys/class/gpio/gpio54/value"
+#define LIGHT_GPIO_DIRECTION "/sys/class/gpio/gpio54/direction"
+
+#define SOCKET_GPIO_PATH "/sys/class/gpio/gpio55/value"
+#define SOCKET_GPIO_DIRECTION "/sys/class/gpio/gpio55/direction"
+
+#define LOGGER_GPIO_PATH "/sys/class/gpio/gpio56/value"
+#define LOGGER_GPIO_DIRECTION "/sys/class/gpio/gpio56/direction"
+
+#define TEMP_ERROR_LED_ON()		user_led(TEMP_SENSOR,TEMP_GPIO_DIRECTION,IO_DIRECTION,TEMP_GPIO_PATH,1)
+#define TEMP_ERROR_LED_OFF()		user_led(TEMP_SENSOR,TEMP_GPIO_DIRECTION,IO_DIRECTION,TEMP_GPIO_PATH,0)
+
+#define LIGHT_ERROR_LED_ON()		user_led(LIGHT_SENSOR,LIGHT_GPIO_DIRECTION,IO_DIRECTION,LIGHT_GPIO_PATH,1)
+#define LIGHT_ERROR_LED_OFF()		user_led(LIGHT_SENSOR,LIGHT_GPIO_DIRECTION,IO_DIRECTION,LIGHT_GPIO_PATH,0)
+
+#define SOCKET_ERROR_LED_ON()		user_led(SOCKET_THREAD,SOCKET_GPIO_DIRECTION,IO_DIRECTION,SOCKET_GPIO_PATH,1)
+#define SOCKET_ERROR_LED_OFF()		user_led(SOCKET_THREAD,SOCKET_GPIO_DIRECTION,IO_DIRECTION,SOCKET_GPIO_PATH,0)
+
+#define LOGGER_ERROR_LED_ON()		user_led(LOGGER_THREAD,LOGGER_GPIO_DIRECTION,IO_DIRECTION,LOGGER_GPIO_PATH,1)
+#define LOGGER_ERROR_LED_OFF()		user_led(LOGGER_THREAD,LOGGER_GPIO_DIRECTION,IO_DIRECTION,LOGGER_GPIO_PATH,0)
+
+
+/******************************
+ * FUNCTION PROTOTYPE         *
+ * ****************************/
+/*@brief: Turns ON or OFF the LED depending upon the status
+ *
+ *@param: param1: gpio pin number
+        : param2: gpio pin path
+ *      : param3: direction of gpio (in/out)
+ *      : param4: gpio pin path value
+ *      : param5: status for LED on/off
+ *
+ *@return: No return value
+ * */
+
+void user_led(char *gpio_number,char *gpio_direction,char *direction,char *gpio_path, int status);
+
+#endif
+#ifndef LOGGER_TASK_H
+#define LOGGER_TASK_H
+
+
+
+#define LOG_TO_FILE(fp, format, ...) \
+do{ \
+	fprintf(fp, format, ##__VA_ARGS__); \
+	fflush(fp); \
+}while(0)
+
+#ifndef UNIT_TEST
+/*pthread variables*/
+pthread_t logger_thread;
+
+/* Posix timer variables */
+static timer_t logger_timerid;
+
+/* Thread IDs */
+pid_t logger_tid;
+
+char *file_name;
+
+/* Function Prototype for thread handler */
+void *logger_thread_handler();
+
+/* Function Prototype (posix timer handler) */
+void logger_timer_handler(union sigval val);
+
+
+/* Function Prototype (Signal Handler) */
+void set_logger_signal_handler(void);
+void logger_signal_handler(int signo, siginfo_t *info,void *extra);
+#endif
+
+#endif/*@filename     : temp_task.h
+ * @author      : Om Raheja & Sorabh Gandhi
+ * @brief       : Contains all the function prototypes realted to temperature task
+ * @date        : 31st March 2019
+ * */
+
+#ifndef TEMP_TASK_H
+#define TEMP_TASK_H
+
+
+/******************************
+ * PTHREAD VARIABLES          *
+ * ****************************/
+pthread_t temp_thread;
+
+
+/******************************
+ * POSIX TIMER VARIABLES      *
+ * ****************************/
+static timer_t temp_timerid;
+
+
+
+/******************************
+ * THREAD IDs                 *
+ * ****************************/
+pid_t temp_tid;
+
+
+
+/*****************************************
+ * FUNCTION PROTOTYPE FOR THREAD HANDLER *
+ * ***************************************/
+/********************************************
+ * TEMPERATURE THREAD HANDLER               *
+ * ******************************************/
+/*@brief: The temperature thread handler triggers the temperature timer handler every
+ *        2 seconds. It also initializes the temperature sensor.
+ *
+ *@param: void
+ *
+ *@return: No Return value
+ * */
+
+void *temp_thread_handler();
+
+
+/********************************************
+ * FUNCTION PROTOTYPE (POSIX TIMER HANDLER) *
+ * ******************************************/
+/********************************************
+ * TEMPERATURE TIMER HANDLER                *
+ * ******************************************/
+/*@brief: Gets called every 2 seconds. Measures the temperature value and logs
+ *       it to the log file. If a remote client socket request comes in,
+ *       this function sends the most recent lux value to the Server via 
+ *       message queue. The server then sends the data to the client via 
+ *       socket. 
+ *
+ *@param: signal value
+ *
+ *@return: No Return value
+ * */
+
+void temp_timer_handler(union sigval val);
+
+
+
+
+/********************************************
+ * FUNCTION PROTOTYPE (SIGNAL HANDLER)      *
+ * ******************************************/
+/********************************************
+ * SET TEMP SIGNAL HANDLER                     *
+ * ******************************************/
+/*@brief: Sets the signal handler for temperature task/thread
+ *
+ *@param: void
+ *
+ *@return: No Return value
+ * */
+
+void set_temp_signal_handler(void);
+
+
+
+/********************************************
+ * LIGHT SIGNAL HANDLER                     *
+ * ******************************************/
+/*@brief: On reception of a SIGUSR1 signal, this function will be invoked.
+ *        It deletes the light timer, kills the light threads and disables the
+ *        light sensor.
+ *
+ *@param: param1: signo
+          param2: info string
+ *        param3: extra
+ *
+ *@return: No Return value
+ * */
+void temp_signal_handler(int signo, siginfo_t *info,void *extra);
+
+
+#endif
+/*@filename	: i2c_helper.h
+ * @author	: Sorabh Gandhi & Om Raheja
+ * @brief	: Contains all the functions related to i2c operations 
+ * @date	: 31st March 2019
+ * */
+
+#ifndef I2C_HELPER_H
+#define I2C_HELPER_H
+
+
+/***********************************************************
+ * USER DEFINED HEADER FILES & STANDARD C LIBRARY HEADERS  *
+ * *********************************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <pthread.h>
+#include "mraa/i2c.h"
+
+/******************************
+ * MACROS & DEFINITIONS       *
+ * ****************************/
+#define MY_I2C_BUS 2
+mraa_i2c_context i2c_context;
+
+
+/******************************
+ * FUNCTION PROTOTYPES        *
+ * ****************************/
+
+
+/******************************
+ * I2C OPEN                   *
+ * ****************************/
+/*@brief: Opens the I2C bus
+ *
+ *@param: void
+ *
+ *@return: 0 on SUCCESS
+ *	 :-1 on FAILURE
+ * */
+int i2c_open();
+
+
+/******************************
+ * I2C CLOSE                  *
+ * ****************************/
+/*@brief: Closes the I2C bus
+ *
+ *@param: void
+ *
+ *@return: 0 on SUCCESS
+ *	 :-1 on FAILURE
+ * */
+int i2c_close();
+
+
+/******************************
+ * I2C_WRITE                  *
+ * ****************************/
+/*@brief: sets slave address and writes 1 byte data to the slave device.
+ *
+ *@param: param1: slave address of the device
+ 	: param2: data to be written to the slave device
+ *
+ *@return: 0 on SUCCESS
+ 	 :-1 on FAILURE
+ * */
+int i2c_write(uint8_t slave_addr, uint8_t data);
+
+
+/******************************
+ * I2C_WRITE_BYTE             *
+ * ****************************/
+/*@brief: writes a byte to the slave device
+ *
+ *@param: param1: slave address of the device
+        : param2: data to be written to the slave device
+ *	: param3: 8 bit register of slave device in which data is to be written
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int i2c_write_byte(uint8_t slave_addr, uint8_t data, uint8_t command);
+
+
+/******************************
+ * I2C_WRITE_WORD             *
+ * ****************************/
+/*@brief: writes 2 byte to the slave device
+ *
+ *@param: param1: slave address of the device
+        : param2: data to be written to the slave device
+ *      : param3: 8 bit register of slave device in which data is to be written
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int i2c_write_word(uint8_t slave_addr, uint16_t data, uint8_t command);
+
+
+/******************************
+ * I2C_READ                   *
+ * ****************************/
+/*@brief: reads a byte to the slave device
+ *
+ *@param: param1: slave address of the device
+        : param2: data to be read from the slave device
+ *      : param3: 8 bit register of slave device from which data is to be read
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int i2c_read(uint8_t slave_addr, uint8_t *data, uint8_t command);
+
+
+/******************************
+ * I2C_READ_BYTES             *
+ * ****************************/
+/*@brief: reads 'n' bytes to the slave device
+ *
+ *@param: param1: slave address of the device
+        : param2: data to be read from the slave device
+ *      : param3: 8 bit register of slave device from which data is to be read
+ *	: param4: number of bytes to be read
+ *
+ *@return: 0 on SUCCESS
+         :-1 on FAILURE
+ * */
+int i2c_read_bytes(uint8_t slave_addr, uint8_t *data, uint8_t command, size_t len);
+
+#endif
+/*@Filename	: client.c
+ * @Author	: Om Raheja & Sorabh Gandhi
+ * @Course	: [PROJECT 1]Advanced Embedded Software Development Spring 2019
+ * @Date	: 31st March 2019
+ * @References	: https://www.youtube.com/watch?v=pFLQmnmDOo
+ *		: https://gist.github.com/sevko/d23646ba07c77c15fde9
+ * @brief	: Connects to the Smart environment monitoring system via a
+ * 		  server-client architecture. Client can ask the system for
+ * 		  Temperature/Lux data. Client then receives and displays
+ * 		  the received data.
+ * */
+
+
+/******************************
+ * STANDARD C LIBRARY HEADERS *
+ * ****************************/
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <time.h>
+#include <sys/time.h>
+#include <signal.h>
+
+
+/******************************
+ * GLOBAL VARIABLES           *
+ * ****************************/
+int sock;
+
+
+/******************************
+ * MAIN FUNCTION              *
+ * ****************************/
+int main(int argc,char *argv[])
+{
+	struct sockaddr_in client;
+	
+	/* Create Socket */
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+
+	if(sock < 0)
+	{
+		perror("Socket Failed");
+		exit(1);
+	}
+
+	/* Populate client structure with IP address and port number */
+	client.sin_family = AF_INET;
+	client.sin_port = htons(9000);
+	client.sin_addr.s_addr = inet_addr("10.0.0.52");
+
+	
+	if(connect(sock,(struct sockaddr *)&client,sizeof(client)) < 0)
+	{
+		perror("Connection Failed");
+		close(sock);
+		exit(1);
+	}
+
+	printf("Connecting with Server........\n");
+
+	char str[5];
+	char string[50];
+
+	while(1)
+	{
+		/* Clear the data buffers */
+		memset(str,0,sizeof(str));
+		memset(string,0,sizeof(string));
+
+		/* Menu for obtaining data from the system */
+		printf("Press Serial Number to obtain respective Data from the System\n");
+		printf("1)Get Temp in Celcius.\n");
+		printf("2)Get Temp in Farhenite.\n");
+		printf("3)Get Temp in Kelvin.\n");
+		printf("4)Get Lux value.\n");
+
+		scanf("%s",&str);
+		
+		/* Send selected option to system */
+		send(sock,str,20,0);
+
+		/* Receive and print the received data */
+		recv(sock,string,50,0);
+		printf("In Client: %s\n",string);
+}
+	/* Close the socket */
+	close(sock);
+	return 0;
+}
+
+/* EOF */
+#include "main_task.h"
+#include "temp_task.h"
+#include "temperature_sensor.h"
+#include "led.h"
+
+char *proj2 = "/tmp/proj1";
+
+int SOCKET=0;
+
+
+
+void temp_signal_handler(int signo, siginfo_t *info,void *extra)
+{
+	printf("\nKilling TEMPERATURE THREAD\n");
+	// i2c_close();
+	timer_delete(temp_timerid);
+	pthread_cancel(temp_thread);
+	
+}
+
+
+void set_temp_signal_handler(void)
+{
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = temp_signal_handler;
+
+	if(sigaction(SIGUSR1,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+}
+
+
+/* Temperature Timer Handler */
+void temp_timer_handler(union sigval val)
+{
+	char buffer[LOGGER_QUEUE_SIZE];
+	char socket_buffer[50];
+	float data = 0;
+	int status = 0;
+
+	pthread_mutex_lock(&lock);
+	
+	//printf("TEMPERATURE TIMER HANDLER\n");
+	LOG_PRINT("[TEMPERATURE TASK]\t [DEBUG] Invoking timer handler\n");
+	//LOG_PRINT("[TEMPERATURE TASK]\t [DEBUG] Invoking timer handler");
+
+	//process_temp_data(&data);
+	status = get_sensortemp(&data);
+	
+	int fd = open(proj2,O_WRONLY);
+
+	if (status == -1) {
+		//sprintf(buffer, "TEMP THREAD DATA\tTID:%ld\t Temperature sensor down",syscall(SYS_gettid));
+		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK] [ERROR] Temperature sensor down");
+		TEMP_ERROR_LED_ON();
+	} else {
+		//sprintf(buffer,"TEMP THREAD DATA\tTID:%ld\ttemp = %f\n",syscall(SYS_gettid), data);
+		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK] [INFO] Temperature = %f C", data);
+		TEMP_ERROR_LED_OFF();
+	}
+
+	mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+
+	write(fd,"T",1);
+
+	close(fd);
+	
+	pthread_mutex_unlock(&lock);
+
+
+	if(SOCKET == 1)
+	{
+		sprintf(socket_buffer,"Temperature (C): %f\n",data);
+		mq_send(socket_queue, socket_buffer, 50, 0);
+		SOCKET=0;
+	}
+
+	if(SOCKET == 2)
+	{
+		sprintf(socket_buffer,"Temperature (F): %f\n",(((data)*(1.8))+32));
+		mq_send(socket_queue, socket_buffer, 50, 0);
+		SOCKET=0;
+	}
+
+	if(SOCKET == 3)
+	{
+		sprintf(socket_buffer,"Temperature (K): %f\n",(data + 273.15));
+		mq_send(socket_queue, socket_buffer, 50, 0);
+		SOCKET=0;
+	}
+
+
+
+	
+}
+
+int BIST_temp()
+{
+	int status;
+	float data;
+	uint16_t t_high = 29;
+	uint16_t t_low = 26;
+
+    status = i2c_open();
+
+    if (status != 0) {
+        printf("Failed to open I2C Bus\n");
+        return -1;
+    }
+
+    write_tlow_reg(t_low);
+
+	write_thigh_reg(t_high);
+
+	status = get_sensortemp(&data);
+	if (status == -1)
+		return status;
+
+    return status;
+}
+
+void *temp_thread_handler()
+{
+
+	char temp_buffer[LOGGER_QUEUE_SIZE];
+	char temp_info[]="Taking Temperature Reading......\n";
+
+	if (BIST_temp() == -1) {
+		printf("BIST for temperature sensor failed due to Sensor inactive");
+		TEMP_ERROR_LED_ON();
+		BUILD_MESSAGE(temp_buffer, "[TEMPERATURE TASK] [ERROR] BIST for temperature sensor failed due to Sensor inactive");
+
+		mq_send(logger_queue, temp_buffer, LOGGER_QUEUE_SIZE, 0);
+
+		pthread_cancel(temp_thread);
+	} else {
+		BUILD_MESSAGE(temp_buffer, "[TEMPERATURE TASK] [DEBUG] BIST for temperature sensor passed");
+		mq_send(logger_queue, temp_buffer, LOGGER_QUEUE_SIZE, 0);
+		TEMP_ERROR_LED_OFF();
+	}
+
+	struct sigevent temp_sev;
+	struct timespec temp_mainTimeSpec;
+	struct itimerspec temp_trigger;
+
+	memset(&temp_sev,0,sizeof(struct sigevent));
+	memset(&temp_trigger,0,sizeof(struct itimerspec));
+
+	/* 
+     * Set the notification method as SIGEV_THREAD:
+     *
+     * Upon timer expiration, `sigev_notify_function` (thread_handler()),
+     * will be invoked as if it were the start function of a new thread.
+     *
+     */
+    temp_sev.sigev_notify = SIGEV_THREAD;
+    temp_sev.sigev_notify_function = &temp_timer_handler;
+	temp_sev.sigev_value.sival_ptr = &temp_info;
+
+	 /*
+    * Create the timer. In this example, CLOCK_REALTIME is used as the
+    * clock, meaning that we're using a system-wide real-time clock for 
+    * this timer.
+    */
+	timer_create(CLOCK_REALTIME, &temp_sev, &temp_timerid);
+
+	/* Timer expiration will occur withing 2 seconds after being armed
+     * by timer_settime(). Then the interval timer will takeover 
+     */
+    temp_trigger.it_value.tv_sec = 2;
+
+	/* Uncomment the following line to set the interval timer and
+	 * and see the threadhandler() execute periodically.
+	 */
+    temp_trigger.it_interval.tv_sec = 2;
+
+    timer_settime(temp_timerid, 0, &temp_trigger, NULL);
+
+    
+
+}
+
+#include "temperature_sensor.h"
+
+int write_tlow_reg(uint16_t temp)
+{
+
+    if ((temp < -55) || (temp > 150))
+        temp = 75;
+
+    int status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, temp, TLOW_REG);
+
+    return status;
+}
+
+int write_thigh_reg(uint16_t temp)
+{   
+    if ((temp <= -55) || (temp >= 150))
+        temp = 80;
+
+    int status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, temp, THIGH_REG);
+
+    return status;
+}
+
+int read_tlow_reg(uint16_t *temp)
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, TLOW_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	*temp = data;
+
+	return status;
+}
+
+int read_thigh_reg(uint16_t *temp)
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, THIGH_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	*temp = data;
+	return status;
+}
+
+int read_configuration_reg(uint16_t *data)
+{
+	uint16_t value = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&value, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	*data = value;
+	return status;
+}
+
+int set_extendedMode()
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	//printf("Read data = %x\n", data);
+
+	data |= ((uint16_t)EXTENDED_MODE_SET_BIT);
+
+	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
+
+	return status;
+}
+
+int set_defaultMode()
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	//printf("Read data = %x\n", data);
+
+	data &= ~((uint16_t)EXTENDED_MODE_SET_BIT);
+
+	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
+
+	return status;
+}
+
+/*value = 1; for high
+value = 0; for active low*/
+int set_alert(uint8_t value)
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	//printf("Read data = %x\n", data);
+
+	if (value) {
+		data |= ((uint16_t)POLARITY_SET_BIT);
+	} else {
+		data &= ~((uint16_t)POLARITY_SET_BIT);
+	}
+
+	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
+
+	return status;
+}
+
+int set_sdMode()
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	//printf("Read data = %x\n", data);
+
+	data |= ((uint16_t)SHUTDOWN_MODE_SET_BIT);
+
+	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
+
+	return status;
+}
+
+int set_comparatorMode()
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	//printf("Read data = %x\n", data);
+
+	data &= ~((uint16_t)THERMOSTAT_MODE_SET_BIT);
+
+	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
+
+	return status;	
+}
+
+int set_InterruptMode()
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	//printf("Read data = %x\n", data);
+
+	data |= ((uint16_t)THERMOSTAT_MODE_SET_BIT);
+
+	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
+
+	return status;	
+}
+
+int set_operationFreq(uint8_t freq)
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	//printf("Read data = %x\n", data);
+
+	data &= ~((uint16_t)(3<<14));
+
+	if (freq == 1) {
+		data |= ((uint16_t)(1<<14));
+	}
+	else if (freq == 2) {
+		data |= ((uint16_t)(2<<14));
+	}
+	else if (freq == 3) {
+		data |= ((uint16_t)(3<<14));
+	}
+	else {
+		data |= ((uint16_t)(1<<14));
+	}
+
+	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
+
+	return status;	
+}
+
+int read_alertBit(uint8_t *value)
+{
+	uint16_t data = 0;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
+	if (status == -1)
+		return status;
+
+	*value = ((data & ((uint16_t)CONFIGURATION_REG)) >> 13);
+	return status;	
+}
+
+int get_sensortemp(float *temp)
+{
+	uint8_t buff[2] = {0};
+	unsigned char MSB, LSB;
+	int data;
+
+	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, buff, TEMPERATURE_REG, sizeof(buff));
+	if (status == -1)
+		return status;
+
+	MSB = buff[0];
+	LSB = buff[1];
+
+	data = ((MSB << 8) | LSB) >> 4;
+	*temp = data*0.0625;
+
+	return status;
+}/*@Filename     : light_task.c
+ * @Author      : Om Raheja & Sorabh Gandhi
+ * @Course      : [PROJECT 1]Advanced Embedded Software Development Spring 2019
+ * @Date        : 31st March 2019
+ * @brief       : Light task is triggered every 2 seconds. It then send the lux value
+ * 		  to the log file. 
+ * */
+
+
+/******************************
+ * USER DEFINED HEADER FILES  *
+ * ****************************/
+#include "main_task.h"
+#include "light_task.h"
+#include "light_sensor.h"
+#include "led.h"
+
+/******************************
+ * GLOBAL VARIABLES           *
+ * ****************************/
+char *proj3 = "/tmp/proj1";	/* Path for named pipe */
+extern int SOCKET;
+int dark = 1;
+int prev_state = -1;
+
+
+/******************************
+ * SIGNAL HANDLER FOR LIGHT   *
+ * ****************************/
+void light_signal_handler(int signo, siginfo_t *info,void *extra)
+{
+	printf("\nKilling LIGHT THREAD\n");
+	sensor_disable();		/* Disable Light sensor */
+	timer_delete(light_timerid);	/* Delete Posix timer */
+	pthread_cancel(light_thread);	/* Kill Light Thread */
+}
+
+
+/*********************************
+ * SET SIGNAL HANDLER FOR LIGHT  *
+ * *******************************/
+void set_light_signal_handler(void)
+{
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = light_signal_handler;
+
+	if(sigaction(SIGUSR2,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+}
+
+
+/*********************************
+ * TIMER HANDLER FOR LIGHT TASK  *
+ * *******************************/
+void light_timer_handler(union sigval val)
+{
+	char buffer[LOGGER_QUEUE_SIZE];
+	char socket_buffer[50];
+	float data;
+
+	pthread_mutex_lock(&lock);
+	
+	LOG_PRINT("[LIGHT TASK]\t [DEBUG] Invoking timer handler\n");
+		
+	/* Get LUx value from light sensor */	
+	data = get_sensorlux();
+
+	/* Open pipe for write only operation */
+	int fd = open(proj3,O_WRONLY);
+
+	if (data == -1)
+	{
+		BUILD_MESSAGE(buffer, "[LIGHT TASK] [ERROR] Light sensor down");
+		/* Switch on LED to indicate error */
+		LIGHT_ERROR_LED_ON();
+	}
+       	else
+       	{
+		/* LED remains OFF when no error */
+		LIGHT_ERROR_LED_OFF();
+
+		if (data < 50) {
+			dark = 0;
+		} else {
+			dark = 1;
+		}
+
+		/* LOG if light state changes from dark to light or from light to dark */
+		if (dark != prev_state) {
+			if (dark) {
+				BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] Lux = %f CURRENT STATE = LIGHT", data);
+			} else {
+				BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] Lux = %f CURRENT STATE = DARK", data);
+			}
+			prev_state = dark;
+		} else {
+			BUILD_MESSAGE(buffer, "[LIGHT TASK] [INFO] LUX = %f", data);
+		}
+	}
+
+	mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+
+	write(fd,"L",1);
+
+	close(fd); 
+	
+	pthread_mutex_unlock(&lock);
+
+	sprintf(socket_buffer,"Light (Lux): %f\n",data);
+	if(SOCKET == 4)
+	{
+		mq_send(socket_queue,socket_buffer,50,0);
+		SOCKET=0;
+	}
+	
+}
+
+
+/******************************
+ * BIST LIGHT FUNCTION        *
+ * ****************************/
+int BIST_light()
+{
+	int status = i2c_open();
+
+    	if (status != 0) {
+        	printf("Failed to open I2C Bus\n");
+        	return -1;
+    	}
+
+    	status = sensor_enable();
+    	if (status != MRAA_SUCCESS) {
+
+        	printf("Failed to enable the sensor\n");
+        	return -1;
+    	}
+
+    	return status;
+}
+
+
+/******************************
+ * LIGHT TASK THREAD HANDLER  *
+ * ****************************/
+void *light_thread_handler()
+{
+	
+	char light_buffer[LOGGER_QUEUE_SIZE];
+	char light_info[]= "Taking Light Reading......\n";
+
+	if (BIST_light() == -1) {
+		printf("BIST for light sensor failed due to Sensor inactive");
+		LIGHT_ERROR_LED_ON();
+		BUILD_MESSAGE(light_buffer, "[LIGHT TASK] [ERROR] BIST for light sensor failed due to Sensor inactive");
+
+		mq_send(logger_queue, light_buffer, LOGGER_QUEUE_SIZE, 0);
+
+		pthread_cancel(light_thread);
+	} else {
+		BUILD_MESSAGE(light_buffer, "[LIGHT TASK] [DEBUG] BIST for light sensor passed");
+		mq_send(logger_queue, light_buffer, LOGGER_QUEUE_SIZE, 0);
+
+		LIGHT_ERROR_LED_OFF();
+	}
+
+	mq_send(logger_queue, light_buffer, LOGGER_QUEUE_SIZE, 0);
+
+	struct sigevent sev;
+	struct timespec mainTimeSpec;
+	struct itimerspec trigger;
+
+	memset(&sev,0,sizeof(struct sigevent));
+	memset(&trigger,0,sizeof(struct itimerspec));
+
+	/* 
+     	 * Set the notification method as SIGEV_THREAD:
+     	 *
+     	 * Upon timer expiration, `sigev_notify_function` (thread_handler()),
+     	 * will be invoked as if it were the start function of a new thread.
+     	 *
+     	 */
+    	sev.sigev_notify = SIGEV_THREAD;
+    	sev.sigev_notify_function = &light_timer_handler;
+	sev.sigev_value.sival_ptr = &light_info;
+
+	 /*
+    	  * Create the timer. In this example, CLOCK_REALTIME is used as the
+    	  * clock, meaning that we're using a system-wide real-time clock for 
+    	  * this timer.
+    	  */
+	timer_create(CLOCK_REALTIME, &sev, &light_timerid);
+
+	/* Timer expiration will occur withing 2 seconds after being armed
+     	 * by timer_settime(). Then the interval timer will takeover 
+     	 */
+    	trigger.it_value.tv_sec = 2;
+
+	/* Uncomment the following line to set the interval timer and
+	 * and see the threadhandler() execute periodically.
+	 */
+ 	trigger.it_interval.tv_sec = 2;
+
+	timer_settime(light_timerid,0,&trigger,NULL);
+
+}
+/*@Filename     : led.c
+ * @Author      : Om Raheja & Sorabh Gandhi
+ * @Course      : [PROJECT 1]Advanced Embedded Software Development Spring 2019
+ * @Date        : 31st March 2019
+ * @References  : https://www.teachmemicro.com/beaglebone-black-blink-led-using-c/
+ * @brief       : Glows the BeagleBone Green on board LED in case of error
+ * */
+
+/******************************
+ * USER DEFINED HEADER FILES  *
+ * ****************************/
+#include "led.h"
+
+
+/******************************
+ * USER LED FUNCTION          *
+ * ****************************/
+void user_led(char *gpio_number,char *gpio_direction,char *direction,char *gpio_path, int status)
+{
+  FILE *export_file = NULL;	//declare pointers
+  FILE *IO_direction = NULL;
+  FILE *IO_value = NULL;  
+
+  export_file = fopen ("/sys/class/gpio/export", "w");
+  fwrite (gpio_number, 1, sizeof(gpio_number), export_file);
+  fclose (export_file);
+
+  //this part here sets the direction of the pin
+  IO_direction = fopen(gpio_direction, "w");
+  fwrite(direction, 1, sizeof(direction), IO_direction); //set the pin to HIGH
+  fclose(IO_direction);
+ 
+  /* Check if status is 1 or not and glow LED depending on the status */
+  if(status == 1)
+  {
+    IO_value = fopen (gpio_path, "w");
+    fwrite (ON, 1, sizeof(ON), IO_value);	//set the pin to HIGH
+    fclose (IO_value);
+  }
+
+  if(status == 0)
+  {
+    IO_value = fopen (gpio_path, "w");
+    fwrite (OFF, 1, sizeof(OFF), IO_value);	//set the pin to LOW
+    fclose (IO_value);
+  }
+
+}
+/*@Filename	: main_task.c
+ * @Author	: Om Raheja & Sorabh Gandhi
+ * @Course	: [PROJECT 1]Advanced Embedded Software Development Spring 2019
+ * @Date	: 31st March 2019
+ * @References	: https://www.softprayog.in/programming/interprocess-communication-using-posix-message-queues-in-linux
+ * @brief	: Creates all the threads(light,temperature,socket,logger) and checks if all the threads are alive/dead.
+ * 		  If this thread is terminates, it terminates the program after releasing all the resources,
+ * 		  closing the I2C bus, Closing the message queue and unlinking it. This task is also responsible
+ * 		  for logging the status of all other threads (alive/dead) to the log file.
+ * */
+
+
+/******************************
+ * USER DEFINED HEADER FILES  *
+ * ****************************/
+#include "main_task.h"
+#include "temp_task.h"
+#include "light_task.h"
+#include "socket_task.h"
+#include "logger_task.h"
+#include "i2c_helper.h"
+#include "led.h"
+
+
+/******************************
+ * POSIX TIMER VARIABLES      *
+ * ****************************/
+static timer_t main_timerid;
+
+
+/* Thread Alive/Dead Counter check structure */
+typedef struct{
+	int temp_count;
+	int light_count;
+	int logger_count;
+	int socket_count;
+}thread_status_tracker_t;
+
+
+/******************************
+ * STRUCTURE INSTANCES	      *
+ * ****************************/
+thread_status_tracker_t current = {0};
+thread_status_tracker_t prev = {0};
+
+
+/******************************
+ * NAMED PIPE FILE PATH       *
+ * ****************************/
+char *proj1 = "/tmp/proj1";
+
+
+/******************************
+ * FUNCTION PROTOTYPES *
+ * ****************************/
+void main_thread_handler();
+void main_signal_handler(int signo, siginfo_t *info,void *extra);
+void set_main_signal_handler(void);
+
+
+/********************************
+ * SIGNAL HANDLER FOR MAIN TASK *
+ * ******************************/
+void main_signal_handler(int signo, siginfo_t *info,void *extra)
+{
+	printf("\nKilling MAIN THREAD\n");
+	i2c_close();			//close i2c bus
+	timer_delete(main_timerid);	//delete timer
+	mq_close(logger_queue);		//close logger queue
+	mq_unlink(QUEUE_NAME);		//unlink logger queue
+	exit(0);
+}
+
+
+/************************************
+ * SET SIGNAL HANDLER FOR MAIN TASK *
+ * * ********************************/
+void set_main_signal_handler(void)
+{
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = main_signal_handler;
+
+	if(sigaction(SIGALRM,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+}
+
+
+/******************************
+ * MAIN THREAD HANDLER        *
+ * ****************************/
+void main_thread_handler(union sigval val)
+{
+	char buffer[LOGGER_QUEUE_SIZE];
+
+	if(current.temp_count <= prev.temp_count)
+	{
+		LOG_PRINT("[MAIN TASK][ERROR] TEMPERATURE TASK DEAD\n");
+		TEMP_ERROR_LED_ON();
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] TEMPERATURE TASK DEAD");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
+	}
+	else
+	{
+		LOG_PRINT("[MAIN TASK]\t[DEBUG] TEMPERATURE TASK ALIVE\n");
+		TEMP_ERROR_LED_OFF();
+		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] TEMPERATURE TASK ALIVE");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
+	}
+
+	if(current.light_count <= prev.light_count)
+	{
+		LOG_PRINT("[MAIN TASK][ERROR] LIGHT TASK DEAD\n");
+		LIGHT_ERROR_LED_ON();
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] LIGHT TASK DEAD");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
+	}
+	else
+	{
+		LOG_PRINT("[MAIN TASK]\t[DEBUG] LIGHT TASK ALIVE\n");
+		LIGHT_ERROR_LED_OFF();
+		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] LIGHT TASK ALIVE");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));		
+	}
+
+	if(current.logger_count <= prev.logger_count)
+	{
+		LOG_PRINT("[MIAN TASK][ERROR] LOGGER TASK DEAD\n");
+		LOGGER_ERROR_LED_ON();
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] LOGGER TASK DEAD");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
+	}
+	else
+	{
+		LOG_PRINT("[MAIN TASK]\t[DEBUG] LOGGER TASK ALIVE\n");
+		LOGGER_ERROR_LED_OFF();
+		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] LOGGER TASK ALIVE");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
+	}
+
+	if(current.socket_count <= prev.socket_count)
+	{
+		LOG_PRINT("[Main TASK][ERROR] SOCKET TASK DEAD\n");
+		SOCKET_ERROR_LED_ON();
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] SOCKET TASK DEAD");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));
+	}
+	else
+	{
+		LOG_PRINT("[MAIN TASK]\t[DEBUG] SOCKET TASK ALIVE\n");
+		SOCKET_ERROR_LED_OFF();
+		BUILD_MESSAGE(buffer, "[MAIN TASK][DEBUG] SOCKET TASK ALIVE");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(buffer, 0, sizeof(buffer));	
+	}
+
+
+	prev.temp_count 	= current.temp_count;
+	prev.light_count 	= current.light_count;
+	prev.logger_count 	= current.logger_count;
+	prev.socket_count 	= current.socket_count;
+}
+
+
+
+/******************************
+ * MAIN THREAD	              *
+ * ****************************/
+int main(int argc, char *argv[])
+{
+	/*check for appropriate commandline arguments*/
+	if ((argc < 2) || (argc > 2)) {				
+		printf("Usage --> ./[%s] [LOG FILENAME]\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	LOG_PRINT("[MAIN TASK]\t [DEBUG] Initiating the project\n");	
+
+	char buffer[LOGGER_QUEUE_SIZE];
+
+	/* Create Named Pipe */
+	mkfifo(proj1, QUEUE_PERMISSIONS); //heartbeat signals
+
+	/* Mutex Initialization */
+	if(pthread_mutex_init(&lock, NULL) !=0)
+	{
+		LOG_PRINT("[MAIN TASK]\t [ERROR] Mutex Initialization Failed\n");
+		exit(0);
+	}
+
+	/* Populating Message queue structure */
+	queue_attr.mq_maxmsg = SIZE_OF_QUEUE;
+	queue_attr.mq_msgsize = LOGGER_QUEUE_SIZE;
+
+	/* Populating Message queue structure [Socket Task] */
+	socket_queue_attr.mq_maxmsg = SIZE_OF_QUEUE;
+	socket_queue_attr.mq_msgsize = 50;
+
+	/* Open Message queue */
+	logger_queue = mq_open(QUEUE_NAME, O_CREAT | O_RDWR, QUEUE_PERMISSIONS, &queue_attr);
+
+	/* Open Message queue [Socket Task] */
+	socket_queue = mq_open(SOCKET_QUEUE_NAME, O_CREAT | O_RDWR, QUEUE_PERMISSIONS, &socket_queue_attr);
+
+	if(logger_queue == (mqd_t)-1)
+	{
+		perror("Failed to Open Queue");
+		exit(0);
+	}
+
+	if(socket_queue == (mqd_t)-1)
+	{
+		perror("Failed to Open Queue");
+		exit(0);
+	}
+
+	/* Set signal handlers for all threads/tasks (light,logger,temperature,socket,main) */
+	set_light_signal_handler();
+	set_logger_signal_handler();
+	set_temp_signal_handler();
+	set_socket_signal_handler();
+	set_main_signal_handler();
+
+	/* Create Logger Thread */
+	if ((pthread_create(&logger_thread,NULL,logger_thread_handler,(void *)argv[1]) || \
+		pthread_create(&light_thread,NULL,light_thread_handler,(void *)NULL) || \
+		pthread_create(&temp_thread,NULL,temp_thread_handler,(void *)NULL) || \
+		pthread_create(&socket_thread,NULL,socket_thread_handler,(void *)NULL)) == 0) {
+
+		BUILD_MESSAGE(buffer, "[MAIN TASK][INFO] BIST for THREAD CREATION PASSED");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+	}
+	else {
+		BUILD_MESSAGE(buffer, "[MAIN TASK][ERROR] BIST for THREAD CREATION FAILED");
+		mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+	}
+
+	/* Character to store heartbeat message from each task */
+	char heartbeat[1];
+
+	ssize_t read_status;
+
+
+	struct sigevent main_sev;
+	struct timespec main_mainTimeSpec;
+	struct itimerspec main_trigger;
+
+	memset(&main_sev,0,sizeof(struct sigevent));
+	memset(&main_trigger,0,sizeof(struct itimerspec));
+
+	/* 
+     	 * Set the notification method as SIGEV_THREAD:
+     	 *
+     	 * Upon timer expiration, `sigev_notify_function` (thread_handler()),
+     	 * will be invoked as if it were the start function of a new thread.
+     	 *
+     	 */
+    	main_sev.sigev_notify = SIGEV_THREAD;
+    	main_sev.sigev_notify_function = &main_thread_handler;
+	main_sev.sigev_value.sival_ptr = &main_timerid;
+
+	/*
+    	 * Create the timer. In this example, CLOCK_REALTIME is used as the
+    	 * clock, meaning that we're using a system-wide real-time clock for 
+    	 * this timer.
+    	 */
+	timer_create(CLOCK_REALTIME, &main_sev, &main_timerid);
+
+	/* Timer expiration will occur withing 2 seconds after being armed
+     	 * by timer_settime(). Then the interval timer will takeover 
+     	 */
+    	main_trigger.it_value.tv_sec = 5;
+
+	/* Uncomment the following line to set the interval timer and
+	 * and see the threadhandler() execute periodically.
+	 */
+    	main_trigger.it_interval.tv_sec = 5;
+
+    	timer_settime(main_timerid,0,&main_trigger,NULL);
+
+
+	while(1)
+	{
+		/* Open Named pipe for read only operation */	
+		int fd = open(proj1,O_RDONLY); 
+
+		/* Clear Heartbeat buffer */
+		memset(heartbeat,0,1);
+
+		/* Read the data(heartbeat) from respective threads */
+		read(fd,heartbeat,1);
+
+		/* Check heartbeat received from each thread */
+		if(!strcmp(heartbeat,"L"))
+		{
+			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'LIGHT TASK'\n");
+			(current.light_count)++;
+			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'LIGHT TASK' = %d\n", current.light_count);
+		}
+
+		if(!strcmp(heartbeat,"T"))
+		{
+			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'TEMPERATURE TASK'\n");
+			(current.temp_count)++;
+			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'TEMPERATURE TASK' = %d\n", current.temp_count);
+		}
+
+		if(!strcmp(heartbeat,"O"))
+		{
+			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'LOGGER TASK'\n");
+			(current.logger_count)++;
+			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'LOGGER TASK' = %d\n", current.logger_count);
+		}
+
+		if(!strcmp(heartbeat,"S"))
+		{
+			LOG_PRINT("[MAIN TASK]\t [DEBUG] Recieved HEARTBEAT from 'SOCKET TASK'\n");
+			(current.socket_count)++;
+			LOG_PRINT("[MAIN TASK]\t [INFO] Number of HEARTBEAT signals recieved from 'SOCKET TASK' = %d\n", current.socket_count);
+		}
+	}
+
+	/* Wait for child threads to terminate */
+	pthread_join(light_thread,NULL);
+	pthread_join(temp_thread,NULL);
+	pthread_join(logger_thread,NULL);
+	pthread_join(socket_thread,NULL);
+
+	/* Destroys the mutex object */
+	pthread_mutex_destroy(&lock);
+
+	return 0;
+}
+#include "i2c_helper.h"
+
+pthread_mutex_t i2c_bus_lock = PTHREAD_MUTEX_INITIALIZER;
+
+int i2c_open()
+{
+    int status = 0;
+
+    if (pthread_mutex_init(&i2c_bus_lock, NULL) != 0) {
+        
+        printf("Failed to initialize mutex\n");
+        return -1;
+    }
+
+    pthread_mutex_lock(&i2c_bus_lock);
+
+    if (i2c_context != NULL) {
+        status = 0;
+    }
+    else {
+        i2c_context = mraa_i2c_init_raw(MY_I2C_BUS);
+        if (i2c_context == NULL) {
+            perror("Failed to initialize I2C");
+            mraa_deinit();
+            status = -1;
+        }
+    }
+
+    pthread_mutex_unlock(&i2c_bus_lock); 
+
+    return status;
+}
+
+int i2c_close()
+{
+     pthread_mutex_lock(&i2c_bus_lock); 
+     int status = 0;
+
+     if (i2c_context != NULL) {
+        status = mraa_i2c_stop(i2c_context); 
+        i2c_context = NULL;  
+     }
+     else {
+        status = 0;
+     }
+
+
+     //mraa_deinit();
+
+     pthread_mutex_unlock(&i2c_bus_lock); 
+
+     if (pthread_mutex_destroy(&i2c_bus_lock) != 0) {
+
+         printf("Failed to destroy mutex\n");
+         status = -1;
+     }
+
+     return status;
+}
+
+int i2c_write(uint8_t slave_addr, uint8_t command)
+{
+    mraa_result_t status = MRAA_SUCCESS;
+
+    pthread_mutex_lock(&i2c_bus_lock); 
+
+    status = mraa_i2c_address(i2c_context, slave_addr);
+    if (status == MRAA_SUCCESS) {
+        status = mraa_i2c_write_byte(i2c_context, command);
+    }
+
+    pthread_mutex_unlock(&i2c_bus_lock); 
+
+    return status;
+}
+
+int i2c_write_byte(uint8_t slave_addr, uint8_t data, uint8_t command)
+{
+    mraa_result_t status = MRAA_SUCCESS;
+
+    pthread_mutex_lock(&i2c_bus_lock);
+
+    status = mraa_i2c_address(i2c_context, slave_addr);
+    if (status == MRAA_SUCCESS) {
+        status = mraa_i2c_write_byte_data(i2c_context, data, command);
+    }
+
+    pthread_mutex_unlock(&i2c_bus_lock);
+    
+    return status;
+}
+
+int i2c_write_word(uint8_t slave_addr, uint16_t data, uint8_t command)
+{
+    mraa_result_t status = MRAA_SUCCESS;
+
+    pthread_mutex_lock(&i2c_bus_lock);
+
+    status = mraa_i2c_address(i2c_context, slave_addr);
+    if (status == MRAA_SUCCESS) {
+        status = mraa_i2c_write_word_data(i2c_context, data, command);
+    }
+
+    pthread_mutex_unlock(&i2c_bus_lock);
+
+    return status;
+}
+
+
+int i2c_read(uint8_t slave_addr, uint8_t *data, uint8_t command)
+{
+    mraa_result_t status = MRAA_SUCCESS;
+
+    pthread_mutex_lock(&i2c_bus_lock);
+
+    status = mraa_i2c_address(i2c_context, slave_addr);
+    if (status == MRAA_SUCCESS) {
+        status = mraa_i2c_read_byte_data (i2c_context, command);
+
+        if (status != -1) {
+            *data = status;
+            status = 0;
+        }
+    }
+
+    pthread_mutex_unlock(&i2c_bus_lock);
+
+    return status;
+}
+
+int i2c_read_bytes(uint8_t slave_addr, uint8_t *data, uint8_t command, size_t len)
+{
+    mraa_result_t status = MRAA_SUCCESS;
+
+    pthread_mutex_lock(&i2c_bus_lock);
+
+    status = mraa_i2c_address(i2c_context, slave_addr);
+    if (status == MRAA_SUCCESS) {
+        status = mraa_i2c_read_bytes_data (i2c_context, command, data, len);
+
+        if (status == len)
+            status = 0;
+    }
+
+    pthread_mutex_unlock(&i2c_bus_lock);
+
+    return status;
+}
+
+#include "light_sensor.h"
+#include <stdint.h>
+#include <math.h>
+
+
+int sensor_enable()
+{
+    int status;
+    status = i2c_write_byte(LIGHT_SENSOR_ADDR, POWER_ON_BIT, (CONTROL_REG | COMMAND_REG));
+
+    return status;
+}
+
+int sensor_disable()
+{
+    int status = i2c_write_byte(LIGHT_SENSOR_ADDR, POWER_OFF_BIT, (CONTROL_REG | COMMAND_REG));
+    return status;
+}
+
+int write_int_tlow(uint16_t tlow)
+{
+    int status = i2c_write_word(LIGHT_SENSOR_ADDR, tlow, (THRESHLOWLOW_REG | COMMAND_REG | WORD_SET_BIT));
+
+    return status;
+}
+
+int read_int_tlow(uint16_t *tlow)
+{
+    uint16_t data;
+
+    int status = i2c_read_bytes(LIGHT_SENSOR_ADDR, (uint8_t *)&data, (THRESHLOWLOW_REG | COMMAND_REG | WORD_SET_BIT), sizeof(data));
+    if (status == -1)
+        return status;
+
+    *tlow = data;
+
+    return status;
+}
+
+int write_int_thigh(uint16_t thigh)
+{
+    int status = i2c_write_word(LIGHT_SENSOR_ADDR, thigh, (THRESHLOWHIGH_REG | COMMAND_REG | WORD_SET_BIT));
+
+    return status;
+}
+
+int read_int_thigh(uint16_t *thigh)
+{
+    uint16_t data;
+
+    int status = i2c_read_bytes(LIGHT_SENSOR_ADDR, (uint8_t *)&data, (THRESHLOWHIGH_REG | COMMAND_REG | WORD_SET_BIT), sizeof(data));
+    if (status == -1)
+        return status;
+
+    *thigh = data;
+
+    return status;
+}
+
+int read_sensorID(uint8_t *id)
+{
+    int status = i2c_read(LIGHT_SENSOR_ADDR, id, (ID_REG | COMMAND_REG));
+
+    return status;
+}
+
+int read_timer_reg(uint8_t *data)
+{
+    int status = i2c_read(LIGHT_SENSOR_ADDR, data, (TIMING_REG | COMMAND_REG));
+
+    return status;
+}
+
+int read_interrupt_reg(uint8_t *data)
+{
+    int status = i2c_read(LIGHT_SENSOR_ADDR, data, (INTERRUPT_REG | COMMAND_REG));
+
+    return status;   
+}
+
+int read_command_reg(uint8_t *data)
+{
+    int status = i2c_read(LIGHT_SENSOR_ADDR, data, (COMMAND_REG));
+
+    return status;
+}
+
+int enable_interrupt(uint8_t set)
+{
+    int status;
+    uint8_t data;
+
+    status = i2c_read(LIGHT_SENSOR_ADDR, &data, (INTERRUPT_REG | COMMAND_REG));
+
+    if (set) {
+        data |= (uint8_t)(1<<4);
+    }
+    else {
+        data &= ~((uint8_t)(1<<4));
+    }
+
+    status = i2c_write_byte(LIGHT_SENSOR_ADDR, data, (INTERRUPT_REG | COMMAND_REG));
+
+    return status;
+}
+
+int clear_pendingInterrupt()
+{
+    int status = i2c_write(LIGHT_SENSOR_ADDR, (CLEAR_PENDING_INT_BIT | COMMAND_REG));
+
+    return status;
+}
+
+int set_integrationTime(uint8_t value)
+{
+    int status;
+    uint8_t data;
+
+    status = i2c_read(LIGHT_SENSOR_ADDR, &data, (TIMING_REG | COMMAND_REG));
+
+    //printf("Read %d from timing regx\n", data);
+
+    data &= ~((uint8_t)INTG_TIME_SET_BIT);
+    data |= value;
+
+    //printf("Writing %d to timing register\n", data);
+
+    status = i2c_write_byte(LIGHT_SENSOR_ADDR, data, (TIMING_REG | COMMAND_REG));
+
+    return status;
+}
+
+int set_manualControl(uint8_t on)
+{
+    int status;
+    uint8_t data;
+
+    status = i2c_read(LIGHT_SENSOR_ADDR, &data, (TIMING_REG | COMMAND_REG));
+    //printf("Read %d from timing regx\n", data);
+
+    data &= ~((uint8_t)MANUAL_CONTROL_ENABLE_BIT(1));
+    data |= (uint8_t)MANUAL_CONTROL_ENABLE_BIT(on);
+
+    //printf("Writing %d to timing register\n", data);
+
+    status = i2c_write_byte(LIGHT_SENSOR_ADDR, data, (TIMING_REG | COMMAND_REG));
+
+    return status;
+}
+
+int read_channel0(uint16_t *data)
+{
+    uint8_t ch0_MSB, ch0_LSB;
+
+    int status = i2c_read(LIGHT_SENSOR_ADDR, &ch0_LSB, (DATA0LOW_REG | COMMAND_REG));
+    if (status == -1) {
+        printf("Failed to read DATA0LOW_REG\n");
+        return status;
+    }
+
+    status = i2c_read(LIGHT_SENSOR_ADDR, &ch0_MSB, (DATA0HIGH_REG | COMMAND_REG));
+    if (status == -1) {
+        printf("Failed to read DATA1HIGH_REG\n");
+        return status;
+    }
+    
+    //printf("MSB and LSB = %d    %d\n", ch0_MSB, ch0_LSB);
+
+    *data = (ch0_MSB << 8) | ch0_LSB;
+
+    return status;
+}
+
+int read_channel1(uint16_t *data)
+{
+    uint8_t ch1_MSB, ch1_LSB;
+
+    int status = i2c_read(LIGHT_SENSOR_ADDR, &ch1_LSB, (DATA1LOW_REG | COMMAND_REG));
+    if (status == -1) {
+        printf("Failed to read DATA1LOW_REG\n");
+        return status;
+    }
+
+    status = i2c_read(LIGHT_SENSOR_ADDR, &ch1_MSB, (DATA1HIGH_REG | COMMAND_REG));
+    if (status == -1) {
+        printf("Failed to read DATA1HIGH_REG\n");
+        return status;
+    }
+    
+    //printf("MSB and LSB = %d    %d\n", ch1_MSB, ch1_LSB);
+
+    *data = (ch1_MSB << 8) | ch1_LSB;
+
+    return status;
+}
+
+float get_sensorlux()
+{
+    uint16_t CH0, CH1;
+    float div;
+    float Sensor_Lux = -1;
+
+    int status = read_channel0(&CH0);
+    if (status == -1)
+        return Sensor_Lux;
+
+    status = read_channel1(&CH1);
+    if (status == -1)
+        return Sensor_Lux;
+
+    if (CH0 != 0)
+        div = (float)CH1 / (float)CH0;
+    else
+        div = 0;
+
+    //printf("Ch0 = %f    ch1 = %f    div = %f\n", CH0, CH1, div);
+
+        if ((div > 0) && (div <= 0.50)) {
+            Sensor_Lux = (0.0304 * CH0) - (0.062 * CH0 * powf(div, 1.4));
+            //printf("In S1   Sensor Value = %f\n", Sensor_Lux);
+        }
+        else if ((div > 0.50) && (div <= 0.61)) {
+            Sensor_Lux = (0.0224 * CH0) - (0.031 * CH1);
+            //printf("In S2   Sensor Value = %f\n", Sensor_Lux);
+        }
+        else if ((div > 0.61) && (div <= 0.80)) {
+            Sensor_Lux = (0.0128 * CH0) - (0.0153 * CH1);
+            //printf("In S3   Sensor Value = %f\n", Sensor_Lux);
+        }
+        else if ((div > 0.80) && (div <= 1.30)) {
+            Sensor_Lux = (0.00146 * CH0) - (0.00112 * CH1);
+            //printf("In S4   Sensor Value = %f\n", Sensor_Lux);
+        }
+        else if (div > 1.30) {
+            Sensor_Lux = 0;
+            //printf("In S5   Sensor Value = %f\n", Sensor_Lux);
+
+        }
+        else {
+            //printf("Undefined\n");
+        }
+
+    return Sensor_Lux;
+}
+#include "main_task.h"
+#include "socket_task.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <signal.h>
+
+
+
+char *proj4 = "/tmp/proj1";
+int sock;
+int mysock;
+int flag=0;
+extern int SOCKET;
+
+
+void socket_signal_handler(int signo, siginfo_t *info,void *extra)
+{
+	printf("\nKilling SOCKET THREAD\n");
+	timer_delete(socket_timerid);	//delete timer	
+	mq_close(socket_queue);			//close message queue
+	mq_unlink(SOCKET_QUEUE_NAME);	//unlink queue
+	close(sock);					//close socket
+	pthread_cancel(socket_thread);	//kill thread
+
+}
+
+
+void set_socket_signal_handler(void)
+{
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = socket_signal_handler;
+
+	if(sigaction(SIGTERM,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+}
+
+
+/* Socket Timer Handler */
+void socket_timer_handler(union sigval val)
+{
+	pthread_mutex_lock(&lock);
+
+	LOG_PRINT("[SOCKET TASK]\t [DEBUG] Invoking timer handler\n");
+	
+	int fd = open(proj4,O_WRONLY);
+
+	write(fd,"S",1);
+
+	close(fd);
+	
+	pthread_mutex_unlock(&lock);
+}
+
+
+void *socket_thread_handler()
+{
+	char socket_buffer[50];
+	char log_buffer[LOGGER_QUEUE_SIZE];
+	char socket_info[]="Socket Thread Alive......\n";
+
+
+	struct sigevent socket_sev;
+	struct timespec socket_mainTimeSpec;
+	struct itimerspec socket_trigger;
+
+	memset(&socket_sev,0,sizeof(struct sigevent));
+	memset(&socket_trigger,0,sizeof(struct itimerspec));
+
+	/* 
+     * Set the notification method as SIGEV_THREAD:
+     *
+     * Upon timer expiration, `sigev_notify_function` (thread_handler()),
+     * will be invoked as if it were the start function of a new thread.
+     *
+     */
+    socket_sev.sigev_notify = SIGEV_THREAD;
+    socket_sev.sigev_notify_function = &socket_timer_handler;
+	socket_sev.sigev_value.sival_ptr = &socket_info;
+
+	 /*
+    * Create the timer. In this example, CLOCK_REALTIME is used as the
+    * clock, meaning that we're using a system-wide real-time clock for 
+    * this timer.
+    */
+	timer_create(CLOCK_REALTIME, &socket_sev, &socket_timerid);
+
+	/* Timer expiration will occur withing 2 seconds after being armed
+     * by timer_settime(). Then the interval timer will takeover 
+     */
+   	socket_trigger.it_value.tv_sec = 2;
+
+	/* Uncomment the following line to set the interval timer and
+	 * and see the threadhandler() execute periodically.
+	 */	
+    socket_trigger.it_interval.tv_sec = 2;
+
+    timer_settime(socket_timerid,0,&socket_trigger,NULL);
+
+    printf("Connecting with Client........\n");
+
+    struct sockaddr_in server;
+	char buffer1[1024];		//buffer to hold data.
+	char data_for_client[50];
+	int ret_val;	
+	int len;
+	char filereader[30];
+
+
+	/* Create TCP/IP socket */
+	sock = socket(AF_INET,SOCK_STREAM,0);
+
+
+
+	if(sock < 0)
+	{
+		BUILD_MESSAGE(log_buffer, "[SOCKET TASK][ERROR] FAILED TO CREATE SOCKET");
+		mq_send(logger_queue, log_buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(log_buffer, 0, sizeof(log_buffer));
+
+		perror("Failed to create Socket");
+		exit(1);
+	}
+
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = INADDR_ANY;
+	server.sin_port = htons(9000);
+
+
+	/* Call Bind */
+	if(bind(sock, (struct sockaddr *)&server, sizeof(server)))
+	{
+		BUILD_MESSAGE(log_buffer, "[SOCKET TASK][ERROR] FAILED TO BIND SOCKET");
+		mq_send(logger_queue, log_buffer, LOGGER_QUEUE_SIZE, 0);
+		memset(log_buffer, 0, sizeof(log_buffer));
+
+		perror("Bind Failed");
+		exit(1);
+	}
+
+	/* Listen to network */
+	listen(sock,5);
+
+	mysock = accept(sock, (struct sockaddr *) 0,0);
+
+	while(1){
+
+	recv(mysock,buffer1,20,0);
+
+	printf("Server string received:%s\n",buffer1);
+
+	BUILD_MESSAGE(log_buffer, "[SOCKET TASK][INFO] RECIEVED NEW REMOTE REQUEST -> %s", buffer1);
+	mq_send(logger_queue, log_buffer, LOGGER_QUEUE_SIZE, 0);
+	memset(log_buffer, 0, sizeof(log_buffer));
+
+	if(!strcmp(buffer1,"1"))
+	{
+		SOCKET = 1;
+		mq_receive(socket_queue,data_for_client,50,0);
+		//fprintf(fptr,"%s\n",buffer);
+		//strcpy()
+		//printf("Temp in C : 25 C\n");
+		//strcpy(buffer1,"Temp in C : 25 C\n");
+		send(mysock,data_for_client,50,0);
+	}
+	else if (!strcmp(buffer1,"2"))
+	{
+		SOCKET = 2;
+		mq_receive(socket_queue,data_for_client,50,0);
+		//printf("Temp in F : 255 C\n");
+		//strcpy(buffer1,"Temp in F : 255 C\n");
+		send(mysock,data_for_client,50,0);
+
+	}
+	else if (!strcmp(buffer1,"3"))
+	{
+
+		SOCKET = 3;
+		mq_receive(socket_queue,data_for_client,50,0);
+		//printf("Temp in K : 1050 C\n");		
+		//strcpy(buffer1,"Temp in K : 1050 C\n");
+		send(mysock,data_for_client,50,0);
+
+	}
+	else if(!strcmp(buffer1,"4"))
+	{
+		SOCKET = 4;
+		mq_receive(socket_queue,data_for_client,50,0);
+		//fprintf(fptr,"%s\n",buffer);
+		//strcpy()
+		//printf("Temp in C : 25 C\n");
+		//strcpy(buffer1,"Temp in C : 25 C\n");
+		send(mysock,data_for_client,50,0);
+		//printf("Lux : 35.58 C\n");		
+		//strcpy(buffer1,"Lux : 35.58 C\n");
+		//send(mysock,buffer1,20,0);
+
+	}
+
+	BUILD_MESSAGE(log_buffer, "[SOCKET TASK][INFO] SENDING RESPONSE TO CLIENT -> %s", data_for_client);
+	mq_send(logger_queue, log_buffer, LOGGER_QUEUE_SIZE, 0);
+	memset(log_buffer, 0, sizeof(log_buffer));
+	memset(data_for_client, 0, sizeof(data_for_client));
+	memset(buffer1, 0, sizeof(buffer1));
+}
+
+}<<<<<<< HEAD
+/*@Filename     : logger_task.c
+ * @Author      : Om Raheja & Sorabh Gandhi
+ * @Course      : [PROJECT 1]Advanced Embedded Software Development Spring 2019
+ * @Date        : 31st March 2019
+ * @brief       : Logger task is responsible to log all the Error/Info/Debug messages
+ * 		  from all threads in a log file.
+ * */
+
+
+/******************************
+ * USER DEFINED HEADER FILES  *
+ * ****************************/
+#ifndef UNIT_TEST
+#include "main_task.h"
+#include "temp_task.h"
+#include "light_task.h"
+#include "socket_task.h"
+#endif	
+
+#include "logger_task.h"
+
+
+/******************************
+ * FILE PATH FOR NAMED PIPE   *
+ * ****************************/
+char *proj5 = "/tmp/proj1";
+
+
+/***********************************
+ * SIGNAL HANDLER FOR LOGGER TASK  *
+ * *********************************/
+void logger_signal_handler(int signo, siginfo_t *info,void *extra)
+{
+#ifndef UNIT_TEST
+	printf("\nKilling LOGGER THREAD\n");
+	
+	timer_delete(logger_timerid);
+	pthread_cancel(logger_thread);
+	kill(getpid(),SIGKILL);
+#endif	
+}
+
+/******************************
+ * SET LOGGER SIGNAL HANDLER  *
+ * ****************************/
+void set_logger_signal_handler(void)
+{
+#ifndef UNIT_TEST
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = logger_signal_handler;
+
+	if(sigaction(SIGQUIT,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+	#endif	
+}
+
+
+/**********************************
+ * TIMER HANDLER FOR LOGGER TASK  *
+ * ********************************/
+void logger_timer_handler(union sigval val)
+{
+	#ifndef UNIT_TEST
+	//char buffer[50];
+	//pthread_mutex_lock(&lock);
+
+	LOG_PRINT("[LOGGER TASK]\t [DEBUG] Invoking timer handler\n");
+	
+	int fd = open(proj5,O_WRONLY);
+
+	write(fd,"O",1);
+
+	close(fd);
+	
+	//pthread_mutex_unlock(&lock);
+	#endif	
+}
+
+
+/******************************
+ * LOGGER THREAD HANDLER      *
+ * ****************************/
+void *logger_thread_handler(void *arg)
+{
+	#ifndef UNIT_TEST
+	char buffer[LOGGER_QUEUE_SIZE];
+	char logger_info[]="Logging Data......\n";
+
+	file_name = (char *)arg;
+
+	struct sigevent logger_sev;
+	struct timespec logger_mainTimeSpec;
+	struct itimerspec logger_trigger;
+
+	memset(&logger_sev,0,sizeof(struct sigevent));
+	memset(&logger_trigger,0,sizeof(struct itimerspec));
+
+	/* 
+     	 * Set the notification method as SIGEV_THREAD:
+     	 *
+     	 * Upon timer expiration, `sigev_notify_function` (thread_handler()),
+     	 * will be invoked as if it were the start function of a new thread.
+     	 *
+     	 */
+    	logger_sev.sigev_notify = SIGEV_THREAD;
+    	logger_sev.sigev_notify_function = &logger_timer_handler;
+	logger_sev.sigev_value.sival_ptr = &logger_info;
+
+	 /*
+    	  * Create the timer. In this example, CLOCK_REALTIME is used as the
+    	  * clock, meaning that we're using a system-wide real-time clock for 
+    	  * this timer.
+    	  */
+	timer_create(CLOCK_REALTIME, &logger_sev, &logger_timerid);
+
+	/* Timer expiration will occur withing 2 seconds after being armed
+     	 * by timer_settime(). Then the interval timer will takeover 
+     	 */
+    	logger_trigger.it_value.tv_sec = 2;
+
+	/* Uncomment the following line to set the interval timer and
+	 * and see the threadhandler() execute periodically.
+	 */
+    	logger_trigger.it_interval.tv_sec = 2;
+
+    	timer_settime(logger_timerid, 0, &logger_trigger, NULL);
+
+    	fptr = fopen(file_name, "r+");
+	
+	/* Remove file if it already exists */
+    	if (fptr)
+	{
+    		fclose(fptr);
+    		remove(file_name);
+    	}
+
+    	while(1)
+    	{
+		mq_receive(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+		fptr = fopen(file_name, "a");
+		LOG_TO_FILE(fptr, "%s\n", buffer);
+		fclose(fptr);
+
+		memset(buffer, 0, sizeof(buffer));
+    	}
+    }
+
+	// pid_t logger_tid = syscall(SYS_gettid);	//Get thread id	
+	// printf("LOGGER TID:%d\n",logger_tid);
+	#endif
+}

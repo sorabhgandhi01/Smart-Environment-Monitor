@@ -1,3 +1,9 @@
+/*@filename     : main_task.h
+ * @author      : Om Raheja & Sorabh Gandhi
+ * @brief       : Contains all the function prototypes realted to temperature task
+ * @date        : 31st March 2019
+ * */
+
 #ifndef MAIN_TASK_H
 #define MAIN_TASK_H
 
