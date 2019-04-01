@@ -26,11 +26,20 @@
 
 #define POWER_ON_BIT (0x03)
 #define POWER_OFF_BIT (0x00)
+#define WORD_SET_BIT (1<<5)
 #define MANUAL_CONTROL_ENABLE_BIT(x) (x<<3)
 #define INTG_TIME_SET_BIT (0x03)
 #define CLEAR_PENDING_INT_BIT (1<<6)
 
 //Write to Control register
+int write_int_tlow(uint16_t tlow);
+
+int read_int_tlow(uint16_t *tlow);
+
+int write_int_thigh(uint16_t thigh);
+
+int read_int_thigh(uint16_t *thigh);
+
 int sensor_enable();
 
 int sensor_disable();

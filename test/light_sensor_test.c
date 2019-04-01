@@ -41,6 +41,22 @@ int main()
     read_sensorID(&id);
     assert(id == 0x50);
 
+    uint16_t read = 0;
+    uint16_t write = 0x12;
+    status = write_int_tlow(write);
+    assert(status == 0);
+
+    status = read_int_tlow(&read);
+    printf("Read tlow = %x\n", read);
+
+    write = 0x34;
+    status = write_int_thigh(write);
+    assert(status == 0);
+
+    status = read_int_thigh(&read);
+    printf("Read thigh = %x\n", read);
+
+#if 0
     status = set_manualControl(1);
     assert(status == 0);
 
@@ -76,6 +92,7 @@ int main()
 
     read_timer_reg(&time_data);
     assert(time_data == 3);
+#endif
 
     status = sensor_disable();
     assert(status == 0);

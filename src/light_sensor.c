@@ -18,6 +18,46 @@ int sensor_disable()
     return status;
 }
 
+int write_int_tlow(uint16_t tlow)
+{
+    int status = i2c_write_word(LIGHT_SENSOR_ADDR, tlow, (THRESHLOWLOW_REG | COMMAND_REG | WORD_SET_BIT));
+
+    return status;
+}
+
+int read_int_tlow(uint16_t *tlow)
+{
+    uint16_t data;
+
+    int status = i2c_read_bytes(LIGHT_SENSOR_ADDR, (uint8_t *)&data, (THRESHLOWLOW_REG | COMMAND_REG | WORD_SET_BIT), sizeof(data));
+    if (status == -1)
+        return status;
+
+    *tlow = data;
+
+    return status;
+}
+
+int write_int_thigh(uint16_t thigh)
+{
+    int status = i2c_write_word(LIGHT_SENSOR_ADDR, thigh, (THRESHLOWHIGH_REG | COMMAND_REG | WORD_SET_BIT));
+
+    return status;
+}
+
+int read_int_thigh(uint16_t *thigh)
+{
+    uint16_t data;
+
+    int status = i2c_read_bytes(LIGHT_SENSOR_ADDR, (uint8_t *)&data, (THRESHLOWHIGH_REG | COMMAND_REG | WORD_SET_BIT), sizeof(data));
+    if (status == -1)
+        return status;
+
+    *thigh = data;
+
+    return status;
+}
+
 int read_sensorID(uint8_t *id)
 {
     int status = i2c_read(LIGHT_SENSOR_ADDR, id, (ID_REG | COMMAND_REG));
