@@ -46,4 +46,4 @@ led.o: src/led.c
 
 
 clean:
-	rm *.o main_task *.txt
+	rm -f *.o main_task *.txt

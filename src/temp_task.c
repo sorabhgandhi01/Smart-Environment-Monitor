@@ -1,6 +1,7 @@
 #include "main_task.h"
 #include "temp_task.h"
 #include "temperature_sensor.h"
+#include "led.h"
 
 char *proj2 = "/tmp/proj1";
 
@@ -54,9 +55,11 @@ void temp_timer_handler(union sigval val)
 	if (status == -1) {
 		//sprintf(buffer, "TEMP THREAD DATA\tTID:%ld\t Temperature sensor down",syscall(SYS_gettid));
 		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK] [ERROR] Temperature sensor down");
+		TEMP_ERROR_LED_ON();
 	} else {
 		//sprintf(buffer,"TEMP THREAD DATA\tTID:%ld\ttemp = %f\n",syscall(SYS_gettid), data);
 		BUILD_MESSAGE(buffer, "[TEMPERATURE TASK] [INFO] Temperature = %f C", data);
+		TEMP_ERROR_LED_OFF();
 	}
 
 	mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
@@ -78,12 +81,36 @@ void temp_timer_handler(union sigval val)
 	
 }
 
+int BIST_temp()
+{
+	int status;
+
+    status = i2c_open();
+
+    if (status != 0) {
+        printf("Failed to open I2C Bus\n");
+        return status;
+    }
+
+    return status;
+}
 
 void *temp_thread_handler()
 {
 
-	char temp_buffer[50];
+	char temp_buffer[LOGGER_QUEUE_SIZE];
 	char temp_info[]="Taking Temperature Reading......\n";
+
+	if (BIST_temp() != 0) {
+		printf("BIST for temperature sensor failed due to Sensor inactive");
+		TEMP_ERROR_LED_ON();
+		BUILD_MESSAGE(temp_buffer, "[TEMPERATURE TASK] [ERROR] BIST for temperature sensor failed due to Sensor inactive");
+
+		goto exit;
+	} else {
+		BUILD_MESSAGE(temp_buffer, "[TEMPERATURE TASK] [DEBUG] BIST for temperature sensor passed");
+		TEMP_ERROR_LED_OFF();
+	}
 
 	struct sigevent temp_sev;
 	struct timespec temp_mainTimeSpec;
@@ -122,13 +149,7 @@ void *temp_thread_handler()
 
     timer_settime(temp_timerid, 0, &temp_trigger, NULL);
 
-    int status;
-
-    status = i2c_open();
-
-    if (status != 0) {
-        printf("Failed to open I2C Bus\n");
-        //return -1;
-    }
+    exit:
+    	pthread_cancel(temp_thread);
 
 }
