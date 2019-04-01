@@ -100,6 +100,7 @@ void temp_timer_handler(union sigval val)
 int BIST_temp()
 {
 	int status;
+	float data;
 	uint16_t t_high = 29;
 	uint16_t t_low = 26;
 
@@ -113,6 +114,10 @@ int BIST_temp()
     write_tlow_reg(t_low);
 
 	write_thigh_reg(t_high);
+
+	status = get_sensortemp(&data);
+	if (status == -1)
+		return status;
 
     return status;
 }
