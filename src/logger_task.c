@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /*@Filename     : logger_task.c
  * @Author      : Om Raheja & Sorabh Gandhi
  * @Course      : [PROJECT 1]Advanced Embedded Software Development Spring 2019
@@ -10,11 +11,14 @@
 /******************************
  * USER DEFINED HEADER FILES  *
  * ****************************/
+#ifndef UNIT_TEST
 #include "main_task.h"
-#include "logger_task.h"
 #include "temp_task.h"
 #include "light_task.h"
 #include "socket_task.h"
+#endif	
+
+#include "logger_task.h"
 
 
 /******************************
@@ -28,12 +32,13 @@ char *proj5 = "/tmp/proj1";
  * *********************************/
 void logger_signal_handler(int signo, siginfo_t *info,void *extra)
 {
+#ifndef UNIT_TEST
 	printf("\nKilling LOGGER THREAD\n");
 	
 	timer_delete(logger_timerid);
 	pthread_cancel(logger_thread);
 	kill(getpid(),SIGKILL);
-	
+#endif	
 }
 
 /******************************
@@ -41,6 +46,7 @@ void logger_signal_handler(int signo, siginfo_t *info,void *extra)
  * ****************************/
 void set_logger_signal_handler(void)
 {
+#ifndef UNIT_TEST
 	struct sigaction action;
 	action.sa_flags = SA_SIGINFO;
 	action.sa_sigaction = logger_signal_handler;
@@ -50,6 +56,7 @@ void set_logger_signal_handler(void)
 		perror("Sigusr : Sigaction");
 		_exit(1);
 	}
+	#endif	
 }
 
 
@@ -58,6 +65,7 @@ void set_logger_signal_handler(void)
  * ********************************/
 void logger_timer_handler(union sigval val)
 {
+	#ifndef UNIT_TEST
 	//char buffer[50];
 	//pthread_mutex_lock(&lock);
 
@@ -70,6 +78,7 @@ void logger_timer_handler(union sigval val)
 	close(fd);
 	
 	//pthread_mutex_unlock(&lock);
+	#endif	
 }
 
 
@@ -78,7 +87,7 @@ void logger_timer_handler(union sigval val)
  * ****************************/
 void *logger_thread_handler(void *arg)
 {
-
+	#ifndef UNIT_TEST
 	char buffer[LOGGER_QUEUE_SIZE];
 	char logger_info[]="Logging Data......\n";
 
@@ -139,4 +148,9 @@ void *logger_thread_handler(void *arg)
 
 		memset(buffer, 0, sizeof(buffer));
     	}
+    }
+
+	// pid_t logger_tid = syscall(SYS_gettid);	//Get thread id	
+	// printf("LOGGER TID:%d\n",logger_tid);
+	#endif
 }

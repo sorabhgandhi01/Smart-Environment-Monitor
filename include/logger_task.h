@@ -9,6 +9,7 @@ do{ \
 	fflush(fp); \
 }while(0)
 
+#ifndef UNIT_TEST
 /*pthread variables*/
 pthread_t logger_thread;
 
@@ -30,5 +31,6 @@ void logger_timer_handler(union sigval val);
 /* Function Prototype (Signal Handler) */
 void set_logger_signal_handler(void);
 void logger_signal_handler(int signo, siginfo_t *info,void *extra);
+#endif
 
 #endif
