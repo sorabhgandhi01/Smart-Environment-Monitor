@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /*@Filename     : logger_task.c
  * @Author      : Om Raheja & Sorabh Gandhi
  * @Course      : [PROJECT 1]Advanced Embedded Software Development Spring 2019
@@ -56,7 +55,7 @@ void set_logger_signal_handler(void)
 		perror("Sigusr : Sigaction");
 		_exit(1);
 	}
-	#endif	
+#endif	
 }
 
 
@@ -65,7 +64,7 @@ void set_logger_signal_handler(void)
  * ********************************/
 void logger_timer_handler(union sigval val)
 {
-	#ifndef UNIT_TEST
+#ifndef UNIT_TEST
 	//char buffer[50];
 	//pthread_mutex_lock(&lock);
 
@@ -78,7 +77,7 @@ void logger_timer_handler(union sigval val)
 	close(fd);
 	
 	//pthread_mutex_unlock(&lock);
-	#endif	
+#endif	
 }
 
 
@@ -87,7 +86,7 @@ void logger_timer_handler(union sigval val)
  * ****************************/
 void *logger_thread_handler(void *arg)
 {
-	#ifndef UNIT_TEST
+#ifndef UNIT_TEST
 	char buffer[LOGGER_QUEUE_SIZE];
 	char logger_info[]="Logging Data......\n";
 
@@ -134,7 +133,7 @@ void *logger_thread_handler(void *arg)
 	
 	/* Remove file if it already exists */
     	if (fptr)
-	{
+	    {
     		fclose(fptr);
     		remove(file_name);
     	}
@@ -148,9 +147,8 @@ void *logger_thread_handler(void *arg)
 
 		memset(buffer, 0, sizeof(buffer));
     	}
-    }
 
 	// pid_t logger_tid = syscall(SYS_gettid);	//Get thread id	
 	// printf("LOGGER TID:%d\n",logger_tid);
-	#endif
+#endif
 }
