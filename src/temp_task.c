@@ -7,6 +7,31 @@ char *proj2 = "/tmp/proj1";
 int SOCKET=0;
 
 
+
+void temp_signal_handler(int signo, siginfo_t *info,void *extra)
+{
+	printf("\nKilling TEMPERATURE THREAD\n");
+	// i2c_close();
+	timer_delete(temp_timerid);
+	pthread_cancel(temp_thread);
+	
+}
+
+
+void set_temp_signal_handler(void)
+{
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = temp_signal_handler;
+
+	if(sigaction(SIGUSR1,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+}
+
+
 /* Temperature Timer Handler */
 void temp_timer_handler(union sigval val)
 {

@@ -4,6 +4,7 @@
 #include "light_task.h"
 #include "socket_task.h"
 #include "logger_task.h"
+#include "i2c_helper.h"
 
 /* Posix timer variables */
 static timer_t main_timerid;
@@ -25,6 +26,33 @@ char *proj1 = "/tmp/proj1";
 
 /* Function Prototypes */
 void main_thread_handler();
+void main_signal_handler(int signo, siginfo_t *info,void *extra);
+void set_main_signal_handler(void);
+
+void main_signal_handler(int signo, siginfo_t *info,void *extra)
+{
+	printf("\nKilling MAIN THREAD\n");
+	i2c_close();				//close i2c bus
+	timer_delete(main_timerid);	//delete timer
+
+	mq_close(logger_queue);		//close logger queue
+	mq_unlink(QUEUE_NAME);		//unlink logger queue
+	exit(0);
+}
+
+
+void set_main_signal_handler(void)
+{
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = main_signal_handler;
+
+	if(sigaction(SIGALRM,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+}
 
 /* Main Thread Handler */
 void main_thread_handler(union sigval val)
@@ -156,6 +184,13 @@ int main(int argc, char *argv[])
 		perror("Failed to Open Queue");
 		exit(0);
 	}
+
+
+	set_light_signal_handler();
+	set_logger_signal_handler();
+	set_temp_signal_handler();
+	set_socket_signal_handler();
+	set_main_signal_handler();
 
 	/* Create Logger Thread */
 	pthread_create(&logger_thread,NULL,logger_thread_handler,(void *)argv[1]);

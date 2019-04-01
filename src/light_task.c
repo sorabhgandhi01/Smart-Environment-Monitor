@@ -5,37 +5,31 @@
 char *proj3 = "/tmp/proj1";
 extern int SOCKET;
 
-#if 0
-int process_light_data(float *data)
+void light_signal_handler(int signo, siginfo_t *info,void *extra)
 {
-	// int status = i2c_open();
+	printf("\nKilling LIGHT THREAD\n");
 
- //    if (status != 0) {
- //        printf("Failed to open I2C Bus\n");
- //        return -1;
- //    }
-
- //    if ((sensor_enable()) != MRAA_SUCCESS) {
-
- //        printf("Failed to enable the sensor\n");
- //        return -1;
- //    }
-
-    *data = get_sensorlux();
-
- //    if ((sensor_disable()) != MRAA_SUCCESS) {
- //    	printf("Failed to diable the sensor");
- //    }
-
- //    if (i2c_close() != 0) {
-	// 	printf("Failed to close I2C Bus\n");
-	// 	return -1;
-	// }
-
-	return 0;
-       
+	sensor_disable();
+	// i2c_close();
+	timer_delete(light_timerid);
+	pthread_cancel(light_thread);
+	
+	
 }
-#endif
+
+
+void set_light_signal_handler(void)
+{
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = light_signal_handler;
+
+	if(sigaction(SIGUSR2,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+}
 
 /* Light Timer handler */
 void light_timer_handler(union sigval val)

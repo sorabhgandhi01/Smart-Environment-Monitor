@@ -16,4 +16,9 @@ void *socket_thread_handler();
 /* Function Prototype (posix timer handler) */
 void socket_timer_handler(union sigval val);
 
+/* Function Prototype (Signal Handler) */
+void set_socket_signal_handler(void);
+void socket_signal_handler(int signo, siginfo_t *info,void *extra);
+
+
 #endif

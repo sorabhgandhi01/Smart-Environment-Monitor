@@ -3,6 +3,35 @@
 
 char *proj5 = "/tmp/proj1";
 
+
+
+void logger_signal_handler(int signo, siginfo_t *info,void *extra)
+{
+	printf("\nKilling LOGGER THREAD\n");
+	timer_delete(logger_timerid);
+	pthread_cancel(logger_thread);
+	
+	
+	// fclose(fptr);
+	// mq_close(logger_queue);
+	// mq_unlink(QUEUE_NAME);
+	
+}
+
+
+void set_logger_signal_handler(void)
+{
+	struct sigaction action;
+	action.sa_flags = SA_SIGINFO;
+	action.sa_sigaction = logger_signal_handler;
+
+	if(sigaction(SIGQUIT,&action,NULL) == -1)
+	{
+		perror("Sigusr : Sigaction");
+		_exit(1);
+	}
+}
+
 /* Logger Timer Handler */
 void logger_timer_handler(union sigval val)
 {

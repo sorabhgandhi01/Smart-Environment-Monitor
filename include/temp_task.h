@@ -18,4 +18,9 @@ void *temp_thread_handler();
 /* Function Prototype (posix timer handler) */
 void temp_timer_handler(union sigval val);
 
+/* Function Prototype (Signal Handler) */
+void set_temp_signal_handler(void);
+void temp_signal_handler(int signo, siginfo_t *info,void *extra);
+
+
 #endif
