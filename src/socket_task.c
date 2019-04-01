@@ -177,6 +177,7 @@ void *socket_thread_handler()
 	}
 	else if (!strcmp(buffer1,"3"))
 	{
+
 		SOCKET = 3;
 		mq_receive(socket_queue,data_for_client,50,0);
 		//printf("Temp in K : 1050 C\n");		

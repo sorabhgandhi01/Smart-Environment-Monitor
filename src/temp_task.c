@@ -70,12 +70,28 @@ void temp_timer_handler(union sigval val)
 	
 	pthread_mutex_unlock(&lock);
 
-	sprintf(socket_buffer,"Temperature (C): %f\n",data);
-	if((SOCKET == 1) || (SOCKET == 2) || (SOCKET == 3))
+
+	if(SOCKET == 1)
 	{
+		sprintf(socket_buffer,"Temperature (C): %f\n",data);
 		mq_send(socket_queue, socket_buffer, 50, 0);
 		SOCKET=0;
 	}
+
+	if(SOCKET == 2)
+	{
+		sprintf(socket_buffer,"Temperature (F): %f\n",(((data)*(1.8))+32));
+		mq_send(socket_queue, socket_buffer, 50, 0);
+		SOCKET=0;
+	}
+
+	if(SOCKET == 3)
+	{
+		sprintf(socket_buffer,"Temperature (K): %f\n",(data + 273.15));
+		mq_send(socket_queue, socket_buffer, 50, 0);
+		SOCKET=0;
+	}
+
 
 
 	
