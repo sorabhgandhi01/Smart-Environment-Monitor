@@ -56,7 +56,6 @@ int main()
     status = read_int_thigh(&read);
     printf("Read thigh = %x\n", read);
 
-#if 0
     status = set_manualControl(1);
     assert(status == 0);
 
@@ -92,7 +91,6 @@ int main()
 
     read_timer_reg(&time_data);
     assert(time_data == 3);
-#endif
 
     status = sensor_disable();
     assert(status == 0);
