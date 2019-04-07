@@ -3,10 +3,14 @@
 #include "temperature_sensor.h"
 #include "led.h"
 
+#include <poll.h>
+#include <fcntl.h>
+
+#define time_out    (200)
+
 char *proj2 = "/tmp/proj1";
-
 int SOCKET=0;
-
+struct pollfd fileds[1];
 
 
 void temp_signal_handler(int signo, siginfo_t *info,void *extra)
@@ -67,8 +71,23 @@ void temp_timer_handler(union sigval val)
 	write(fd,"T",1);
 
 	close(fd);
+
+	char gpio_buffer[10];
+    if((poll(fileds,1,time_out) > 0))
+	{
+        memset(gpio_buffer,0,10);
+		lseek(fileds[0].fd,0,SEEK_SET);
+        read(fileds[0].fd,gpio_buffer,10);		
+        if(fileds[0].revents & POLLPRI)
+        {
+            memset(buffer, 0, sizeof(buffer));
+            printf("Value = %s\n",gpio_buffer);
+            BUILD_MESSAGE(buffer, "[TEMPERATURE TASK] [ALERT] TEMPERATURE ALERT SIGNAL TRIGGERED");
+            mq_send(logger_queue, buffer, LOGGER_QUEUE_SIZE, 0);
+	    }
+    }
 	
-	pthread_mutex_unlock(&lock);
+    pthread_mutex_unlock(&lock);
 
 
 	if(SOCKET == 1)
@@ -145,6 +164,11 @@ void *temp_thread_handler()
 	struct sigevent temp_sev;
 	struct timespec temp_mainTimeSpec;
 	struct itimerspec temp_trigger;
+
+    int FileDescriptor = open("/sys/class/gpio/gpio67/value", O_RDONLY);
+    fileds[0].fd = FileDescriptor;
+	fileds[0].events = POLLPRI;
+
 
 	memset(&temp_sev,0,sizeof(struct sigevent));
 	memset(&temp_trigger,0,sizeof(struct itimerspec));
