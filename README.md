@@ -14,37 +14,36 @@ Logger Thread: This thread/task is responsible for logging all the data/error me
 
 PROJECT FOLDER
 --------------
-|
-|- doc
-.....|- .keep
-.....|- Project Architecture.jpg
-|- include
-.....|- .keep
-.....|- i2c_helper.h
-.....|- led.h
-.....|- light_sensor.h
-.....|- light_task.h
-.....|- logger_task.h
-.....|- main_task.h
-.....|- socket_task.h
-.....|- temp_task.h
-.....|- temperature_sensor.h
-|- src
-.....|- i2c_helper.c
-.....|- led.c
-.....|- light_sensor.c
-.....|- light_task.c
-.....|- logger_task.c
-.....|- main_task.c
-.....|- socket_task.c
-.....|- temp_task.c
-.....|- temperature_sensor.c
-|- test
-.....|- .keep
-.....|- light_sensor_test.c
-.....|- temperature_sensor_test.c
-|- Makefile
-|- README.md
+
+	|- doc
+	.....|- Project Architecture.jpg
+	.....|- Project1Report.docx
+	|- include
+	.....|- i2c_helper.h
+	.....|- led.h
+	.....|- light_sensor.h
+	.....|- light_task.h
+	.....|- logger_task.h
+	.....|- main_task.h
+	.....|- socket_task.h
+	.....|- temp_task.h
+	.....|- temperature_sensor.h
+	|- src
+	.....|- i2c_helper.c
+	.....|- led.c
+	.....|- light_sensor.c
+	.....|- light_task.c
+	.....|- logger_task.c
+	.....|- main_task.c
+	.....|- socket_task.c
+	.....|- temp_task.c
+	.....|- temperature_sensor.c
+	|- test
+	.....|- logger_task_test.c
+	.....|- light_sensor_test.c
+	.....|- temperature_sensor_test.c
+	|- Makefile
+	|- README.md
 
 BUILD AND RUN STEPS
 -------------------
