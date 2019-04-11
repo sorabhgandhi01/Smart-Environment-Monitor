@@ -1,6 +1,6 @@
 # _*_ Makefile _*_
 
-CC = gcc
+CC =gcc
 
 OBJ = client.o
 
