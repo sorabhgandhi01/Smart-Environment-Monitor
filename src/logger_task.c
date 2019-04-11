@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /*@Filename     : logger_task.c
  * @Author      : Om Raheja & Sorabh Gandhi
  * @Course      : [PROJECT 1]Advanced Embedded Software Development Spring 2019
@@ -153,4 +152,3 @@ void *logger_thread_handler(void *arg)
 	// pid_t logger_tid = syscall(SYS_gettid);	//Get thread id	
 	// printf("LOGGER TID:%d\n",logger_tid);
 	#endif
-}
