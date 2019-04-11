@@ -25,6 +25,8 @@
 #define THERMOSTAT_MODE_SET_BIT				(1<<1)
 #define SHUTDOWN_MODE_SET_BIT				(1)
 #define POLARITY_SET_BIT					(1<<2)
+#define F0_SET_BIT                          (1<<3)
+#define F1_SET_BIT                          (1<<4)
 
 /*****************************************
  * FUNCTION PROTOTYPES                   *
@@ -222,5 +224,19 @@ int read_alertBit(uint8_t *value);
          :-1 on FAILURE
  * */
 int get_sensortemp(float *temp);
+
+
+/*******************************************
+ * SET FAULT QUEUE
+ * *****************************************
+ * @brief: This function sets the fault bits F0 and F1 of configurate register to
+ *          manipulate the fault queue inorder to prevent fault alerts
+ *
+ * @param:  void
+ *
+ * @return: 0 on Success
+ *         -1 on Failure
+ ***/
+int set_faultqueue();
 
 #endif

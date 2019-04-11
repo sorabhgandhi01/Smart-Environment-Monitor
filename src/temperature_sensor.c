@@ -103,8 +103,6 @@ int set_alert(uint8_t value)
 	if (status == -1)
 		return status;
 
-	//printf("Read data = %x\n", data);
-
 	if (value) {
 		data |= ((uint16_t)POLARITY_SET_BIT);
 	} else {
@@ -158,8 +156,6 @@ int set_InterruptMode()
 	if (status == -1)
 		return status;
 
-	//printf("Read data = %x\n", data);
-
 	data |= ((uint16_t)THERMOSTAT_MODE_SET_BIT);
 
 	status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
@@ -174,8 +170,6 @@ int set_operationFreq(uint8_t freq)
 	int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
 	if (status == -1)
 		return status;
-
-	//printf("Read data = %x\n", data);
 
 	data &= ~((uint16_t)(3<<14));
 
@@ -223,7 +217,31 @@ int get_sensortemp(float *temp)
 	LSB = buff[1];
 
 	data = ((MSB << 8) | LSB) >> 4;
+    if(data & 0x800)
+	{
+		data = (~(data) + 1) & 0xFFF;
+		data = -1 * data;
+	}
+
+
 	*temp = data*0.0625;
+    printf("%d\n", temp);
 
 	return status;
+}
+
+
+int set_faultqueue()
+{
+    uint16_t data = 0;
+
+    int status = i2c_read_bytes(TEMPERATURE_SENSOR_ADDR, (uint8_t *)&data, CONFIGURATION_REG, sizeof(status));
+    if (status == -1)
+        return status;
+    
+    data |= (((uint16_t)F0_SET_BIT) | ((uint16_t)F1_SET_BIT));
+
+    status = i2c_write_word(TEMPERATURE_SENSOR_ADDR, data, CONFIGURATION_REG);
+
+    return status;
 }
